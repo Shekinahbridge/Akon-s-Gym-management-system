@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Now - Akon's GymHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card" style="max-width: 600px;">
+            <div class="auth-header">
+                <h1>Join Akon's GymHouse</h1>
+                <p>Start your fitness journey today</p>
+            </div>
+            
+            <!-- Step 1: Personal Info -->
+            <div id="step1">
+                <form id="registerForm">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">First Name</label>
+                            <input type="text" id="firstName" class="form-input" placeholder="John" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" id="lastName" class="form-input" placeholder="Doe" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" id="email" class="form-input" placeholder="your@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input type="tel" id="phone" class="form-input" placeholder="+254 712 345 678" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="password" class="form-input" placeholder="Create a password" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm Password</label>
+                        <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm your password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Continue to Payment</button>
+                </form>
+            </div>
+            
+            <!-- Step 2: Select Plan -->
+            <div id="step2" class="hidden">
+                <h3 style="margin-bottom: 1rem;">Select Your Plan</h3>
+                <div id="plansContainer" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+                    <!-- Plans will be loaded here -->
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="button" id="backToStep1" class="btn btn-secondary" style="flex: 1;">Back</button>
+                    <button type="button" id="continueToPayment" class="btn btn-primary" style="flex: 1;" disabled>Continue</button>
+                </div>
+            </div>
+            
+            <!-- Step 3: M-Pesa Payment -->
+            <div id="step3" class="hidden">
+                <div class="mpesa-container">
+                    <div class="mpesa-logo">M</div>
+                    <h3>M-Pesa Payment</h3>
+                    <p id="paymentAmount" style="font-size: 1.5rem; font-weight: 700; color: var(--accent); margin: 1rem 0;"></p>
+                    <div class="mpesa-instructions">
+                        <p style="margin-bottom: 1rem;">Follow these steps to complete payment:</p>
+                        <ol>
+                            <li>Enter your M-Pesa number below</li>
+                            <li>Click "Pay Now"</li>
+                            <li>Check your phone for STK push</li>
+                            <li>Enter your M-Pesa PIN</li>
+                        </ol>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">M-Pesa Number</label>
+                        <input type="tel" id="mpesaNumber" class="form-input" placeholder="254712345678" required>
+                    </div>
+                    <button type="button" id="payNow" class="btn btn-success" style="width: 100%;">
+                        <span id="payText">Pay Now</span>
+                    </button>
+                    <button type="button" id="backToStep2" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;">Back</button>
+                </div>
+            </div>
+            
+            <div class="auth-footer">
+                <p>Already have an account? <a href="login.html">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/app.js"></script>
+    <script>
+        // Ensure data is initialized
+        DataStore.init();
+        console.log('Register page loaded. Users:', DataStore.getUsers());
+        
+        let selectedPlan = null;
+        let registrationData = {};
+        
+        // Load plans
+        function loadPlans() {
+            const plans = DataStore.getPlans();
+            const container = document.getElementById('plansContainer');
+            const urlParams = new URLSearchParams(window.location.search);
+            const preselectedPlan = urlParams.get('plan');
+            
+            container.innerHTML = plans.map(plan => `
+                <div class="pricing-card ${plan.featured ? 'featured' : ''} ${preselectedPlan === plan.id ? 'selected' : ''}" 
+                     data-plan-id="${plan.id}"
+                     style="cursor: pointer; ${preselectedPlan === plan.id ? 'border: 2px solid var(--accent);' : ''}">
+                    ${plan.featured ? '<div class="pricing-badge">Most Popular</div>' : ''}
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="margin: 0;">${plan.name}</h4>
+                            <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0.25rem 0 0;">${plan.description}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent);">KES ${plan.price.toLocaleString()}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">per week</div>
+                        </div>
+                    </div>
+                    <ul class="pricing-features" style="margin: 1rem 0 0; font-size: 0.875rem;">
+                        ${plan.features.map(f => `<li>${f}</li>`).join('')}
+                    </ul>
+                </div>
+            `).join('');
+            
+            // Add click handlers
+            container.querySelectorAll('.pricing-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    container.querySelectorAll('.pricing-card').forEach(c => {
+                        c.style.border = '';
+                        c.classList.remove('selected');
+                    });
+                    card.style.border = '2px solid var(--accent)';
+                    card.classList.add('selected');
+                    selectedPlan = plans.find(p => p.id === card.dataset.planId);
+                    document.getElementById('continueToPayment').disabled = false;
+                });
+            });
+            
+            // Auto-select if preselected
+            if (preselectedPlan) {
+                selectedPlan = plans.find(p => p.id === preselectedPlan);
+                if (selectedPlan) {
+                    document.getElementById('continueToPayment').disabled = false;
+                }
+            }
+        }
+        
+        // Step 1: Register form
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                UI.toast('Passwords do not match', 'error');
+                return;
+            }
+            
+            registrationData = {
+                name: document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                password: password,
+                role: 'member'
+            };
+            
+            // Check if email exists
+            if (DataStore.getUserByEmail(registrationData.email)) {
+                UI.toast('Email already registered', 'error');
+                return;
+            }
+            
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
+            loadPlans();
+        });
+        
+        // Step 2: Plan selection
+        document.getElementById('backToStep1').addEventListener('click', () => {
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step1').classList.remove('hidden');
+        });
+        
+        document.getElementById('continueToPayment').addEventListener('click', () => {
+            if (!selectedPlan) {
+                UI.toast('Please select a plan', 'error');
+                return;
+            }
+            
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.remove('hidden');
+            document.getElementById('paymentAmount').textContent = 'KES ' + selectedPlan.price.toLocaleString();
+        });
+        
+        // Step 3: Payment
+        document.getElementById('backToStep2').addEventListener('click', () => {
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
+        });
+        
+        document.getElementById('payNow').addEventListener('click', async () => {
+            const mpesaNumber = document.getElementById('mpesaNumber').value;
+            
+            if (!mpesaNumber || mpesaNumber.length < 10) {
+                UI.toast('Please enter a valid M-Pesa number', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('payNow');
+            const payText = document.getElementById('payText');
+            
+            btn.disabled = true;
+            payText.textContent = 'Processing...';
+            
+            // Simulate M-Pesa payment
+            const result = await MPesa.initiatePayment(mpesaNumber, selectedPlan.price, selectedPlan.name + ' Membership');
+            
+            if (result.success) {
+                // Create user
+                const user = DataStore.addUser(registrationData);
+                
+                // Record payment
+                DataStore.addPayment({
+                    userId: user.id,
+                    planId: selectedPlan.id,
+                    amount: selectedPlan.price,
+                    transactionId: result.transactionId,
+                    phone: mpesaNumber,
+                    status: 'completed'
+                });
+                
+                // Update user with plan
+                DataStore.updateUser(user.id, { 
+                    plan: selectedPlan.id,
+                    planExpiry: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+                });
+                
+                UI.toast('Payment successful! Welcome to Akon\'s GymHouse!', 'success');
+                
+                // Auto login and redirect
+                Auth.login(user.email, registrationData.password);
+                
+                setTimeout(() => {
+                    window.location.href = 'member/dashboard.html';
+                }, 1500);
+            } else {
+                UI.toast(result.error, 'error');
+                btn.disabled = false;
+                payText.textContent = 'Pay Now';
+            }
+        });
+    </script>
+</body>
+</html>

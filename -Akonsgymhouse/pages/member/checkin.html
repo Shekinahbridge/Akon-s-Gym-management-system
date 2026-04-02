@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check-in - Member - Akon's GymHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="sidebar-logo">AKON'S <span>GYMHOUSE</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html">📊 Dashboard</a></li>
+                    <li><a href="checkin.html" class="active">📍 Check-in</a></li>
+                    <li><a href="classes.html">📅 Classes</a></li>
+                    <li><a href="payments.html">💳 Payments</a></li>
+                    <li><a href="profile.html">👤 Profile</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">M</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Member</div>
+                        <div class="user-role">Member</div>
+                    </div>
+                </div>
+                <button onclick="Auth.logout()" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 1rem;">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div style="margin-bottom: 2rem;">
+                <h1>Check-in</h1>
+                <p style="color: var(--text-secondary);">Track your gym attendance</p>
+            </div>
+
+            <!-- Check-in Button -->
+            <div class="card" style="text-align: center; padding: 3rem; margin-bottom: 2rem;">
+                <div id="checkinStatus">
+                    <div style="font-size: 5rem; margin-bottom: 1rem;">📍</div>
+                    <h2 id="checkinTitle">Ready to Check In?</h2>
+                    <p id="checkinMessage" style="margin: 1rem 0 2rem;">Click the button below to record your attendance for today</p>
+                    <button onclick="checkIn()" id="checkinBtn" class="btn btn-primary btn-lg" style="min-width: 250px;">
+                        Check In Now
+                    </button>
+                </div>
+                <div id="checkedInStatus" class="hidden">
+                    <div style="font-size: 5rem; margin-bottom: 1rem;">✅</div>
+                    <h2 style="color: var(--success);">You're Checked In!</h2>
+                    <p style="margin: 1rem 0;">Great job! Keep up the good work.</p>
+                    <div style="background-color: var(--cream); padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem;">
+                        <p style="margin: 0;"><strong>Check-in Time:</strong> <span id="checkinTime">-</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar View -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1.5rem;">Your Attendance Calendar</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <button onclick="changeMonth(-1)" class="btn btn-outline btn-sm">← Previous</button>
+                    <h4 id="calendarMonth" style="margin: 0;">January 2024</h4>
+                    <button onclick="changeMonth(1)" class="btn btn-outline btn-sm">Next →</button>
+                </div>
+                <div class="calendar-grid" style="text-align: center; font-weight: 600; margin-bottom: 0.5rem;">
+                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                </div>
+                <div id="calendarDays" class="calendar-grid">
+                    <!-- Populated by JS -->
+                </div>
+                <div style="display: flex; gap: 2rem; margin-top: 1.5rem; justify-content: center;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="width: 20px; height: 20px; background-color: var(--success); border-radius: 4px;"></div>
+                        <span style="font-size: 0.875rem;">Checked In</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="width: 20px; height: 20px; border: 2px solid var(--accent); border-radius: 4px;"></div>
+                        <span style="font-size: 0.875rem;">Today</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Check-in History -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Check-in History</h3>
+                    <button onclick="exportCheckins()" class="btn btn-outline btn-sm">📥 Export</button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Day</th>
+                            <th>Week</th>
+                        </tr>
+                    </thead>
+                    <tbody id="checkinHistory">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        if (!Auth.requireRole('member')) throw new Error('Unauthorized');
+
+        const currentUser = Auth.getUser();
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+
+        function loadCheckinStatus() {
+            const todayCheckin = DataStore.getTodayCheckin(currentUser.id);
+            
+            if (todayCheckin) {
+                document.getElementById('checkinStatus').classList.add('hidden');
+                document.getElementById('checkedInStatus').classList.remove('hidden');
+                document.getElementById('checkinTime').textContent = todayCheckin.time;
+            }
+        }
+
+        function checkIn() {
+            if (DataStore.getTodayCheckin(currentUser.id)) {
+                UI.toast('You have already checked in today!', 'warning');
+                return;
+            }
+
+            const checkin = DataStore.addCheckin(currentUser.id);
+            
+            document.getElementById('checkinStatus').classList.add('hidden');
+            document.getElementById('checkedInStatus').classList.remove('hidden');
+            document.getElementById('checkinTime').textContent = checkin.time;
+            
+            UI.toast('Check-in successful! Great job!', 'success');
+            loadCalendar();
+            loadHistory();
+        }
+
+        function loadCalendar() {
+            const checkins = DataStore.getCheckinsByUser(currentUser.id);
+            const checkinDates = checkins.map(c => new Date(c.date).toDateString());
+            
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            document.getElementById('calendarMonth').textContent = monthNames[currentMonth] + ' ' + currentYear;
+            
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            
+            let html = '';
+            
+            // Empty cells for days before the 1st
+            for (let i = 0; i < firstDay; i++) {
+                html += '<div></div>';
+            }
+            
+            // Days of the month
+            const today = new Date();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(currentYear, currentMonth, day);
+                const dateStr = date.toDateString();
+                const isToday = date.toDateString() === today.toDateString();
+                const isCheckedIn = checkinDates.includes(dateStr);
+                
+                let classes = 'calendar-day';
+                if (isCheckedIn) classes += ' checked';
+                if (isToday) classes += ' today';
+                
+                html += `<div class="${classes}">${day}</div>`;
+            }
+            
+            document.getElementById('calendarDays').innerHTML = html;
+        }
+
+        function changeMonth(delta) {
+            currentMonth += delta;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            loadCalendar();
+        }
+
+        function loadHistory() {
+            const checkins = DataStore.getCheckinsByUser(currentUser.id);
+            
+            document.getElementById('checkinHistory').innerHTML = checkins.slice().reverse().map((c, index) => {
+                const date = new Date(c.date);
+                const weekNum = Math.ceil((date.getDate()) / 7);
+                
+                return `
+                    <tr>
+                        <td>${UI.formatDate(c.date)}</td>
+                        <td>${c.time}</td>
+                        <td>${date.toLocaleDateString('en-US', { weekday: 'long' })}</td>
+                        <td>Week ${weekNum}</td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="4" style="text-align: center; padding: 2rem;">No check-ins yet</td></tr>';
+        }
+
+        function exportCheckins() {
+            const checkins = DataStore.getCheckinsByUser(currentUser.id);
+            const data = checkins.map(c => ({
+                Date: UI.formatDate(c.date),
+                Time: c.time,
+                Day: new Date(c.date).toLocaleDateString('en-US', { weekday: 'long' })
+            }));
+            
+            Reports.downloadCSV(data, 'my_checkins_' + new Date().toISOString().split('T')[0]);
+            UI.toast('Check-ins exported!', 'success');
+        }
+
+        loadCheckinStatus();
+        loadCalendar();
+        loadHistory();
+    </script>
+</body>
+</html>

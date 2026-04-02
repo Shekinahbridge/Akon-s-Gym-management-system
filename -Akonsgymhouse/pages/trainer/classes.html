@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Classes - Trainer - Akon's GymHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="sidebar-logo">AKON'S <span>GYMHOUSE</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html">📊 Dashboard</a></li>
+                    <li><a href="classes.html" class="active">📅 My Classes</a></li>
+                    <li><a href="attendance.html">📍 Attendance</a></li>
+                    <li><a href="schedule.html">🗓️ Schedule</a></li>
+                    <li><a href="profile.html">👤 Profile</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">T</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Trainer</div>
+                        <div class="user-role">Trainer</div>
+                    </div>
+                </div>
+                <button onclick="Auth.logout()" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 1rem;">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div style="margin-bottom: 2rem;">
+                <h1>My Classes</h1>
+                <p style="color: var(--text-secondary);">View and manage your assigned classes</p>
+            </div>
+
+            <!-- Classes Grid -->
+            <div id="classesGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Class Bookings -->
+            <div class="table-container" style="margin-top: 2rem;">
+                <div class="table-header">
+                    <h3>Recent Bookings</h3>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Class</th>
+                            <th>Member</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentBookings">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- View Attendees Modal -->
+    <div class="modal-overlay" id="attendeesModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Class Attendees</h3>
+                <button class="modal-close" onclick="UI.hideModal('attendeesModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="attendeesList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="UI.hideModal('attendeesModal')" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        if (!Auth.requireRole('trainer')) throw new Error('Unauthorized');
+
+        const currentUser = Auth.getUser();
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+
+        function loadClasses() {
+            const myClasses = DataStore.getClassesByTrainer(currentUser.id);
+            const allBookings = DataStore.getBookings();
+            
+            document.getElementById('classesGrid').innerHTML = myClasses.map(c => {
+                const bookings = allBookings.filter(b => b.classId === c.id);
+                const upcoming = bookings.filter(b => new Date(b.date) >= new Date());
+                
+                return `
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="margin: 0;">${c.name}</h3>
+                                <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 0.25rem 0 0;">${c.days.join(', ')} at ${c.time}</p>
+                            </div>
+                            <span style="background-color: var(--cream); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">${c.duration} min</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1rem 0; text-align: center;">
+                            <div style="background-color: var(--cream); padding: 0.75rem; border-radius: 8px;">
+                                <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">${c.maxCapacity}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">Capacity</div>
+                            </div>
+                            <div style="background-color: var(--cream); padding: 0.75rem; border-radius: 8px;">
+                                <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">${bookings.length}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">Total Bookings</div>
+                            </div>
+                            <div style="background-color: var(--cream); padding: 0.75rem; border-radius: 8px;">
+                                <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">${upcoming.length}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">Upcoming</div>
+                            </div>
+                        </div>
+                        <button onclick="viewAttendees('${c.id}')" class="btn btn-outline" style="width: 100%;">View All Attendees</button>
+                    </div>
+                `;
+            }).join('') || '<p style="text-align: center; padding: 2rem;">No classes assigned yet</p>';
+
+            // Recent bookings
+            const myClassIds = myClasses.map(c => c.id);
+            const myBookings = allBookings.filter(b => myClassIds.includes(b.classId)).slice(-10).reverse();
+            
+            document.getElementById('recentBookings').innerHTML = myBookings.map(b => {
+                const cls = DataStore.getClassById(b.classId);
+                const member = DataStore.getUserById(b.userId);
+                
+                let statusClass = 'pending';
+                let statusText = 'Booked';
+                if (b.status === 'attended') {
+                    statusClass = 'active';
+                    statusText = 'Attended';
+                } else if (b.status === 'missed') {
+                    statusClass = 'inactive';
+                    statusText = 'Missed';
+                } else if (b.status === 'cancelled') {
+                    statusClass = 'inactive';
+                    statusText = 'Cancelled';
+                }
+                
+                return `
+                    <tr>
+                        <td>${UI.formatDate(b.date)}</td>
+                        <td>${cls ? cls.name : 'Unknown'}</td>
+                        <td>${member ? member.name : 'Unknown'}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="4" style="text-align: center; padding: 2rem;">No bookings yet</td></tr>';
+        }
+
+        function viewAttendees(classId) {
+            const bookings = DataStore.getBookings().filter(b => b.classId === classId);
+            const cls = DataStore.getClassById(classId);
+            
+            document.getElementById('attendeesList').innerHTML = `
+                <h4 style="margin-bottom: 1rem;">${cls ? cls.name : 'Class'} - All Attendees</h4>
+                ${bookings.length > 0 ? `
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Member</th><th>Date</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            ${bookings.map(b => {
+                                const member = DataStore.getUserById(b.userId);
+                                let statusClass = 'pending';
+                                if (b.status === 'attended') statusClass = 'active';
+                                else if (b.status === 'missed' || b.status === 'cancelled') statusClass = 'inactive';
+                                
+                                return `
+                                    <tr>
+                                        <td>${member ? member.name : 'Unknown'}</td>
+                                        <td>${UI.formatDate(b.date)}</td>
+                                        <td><span class="status-badge ${statusClass}">${b.status}</span></td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                ` : '<p style="text-align: center; padding: 2rem;">No attendees yet</p>'}
+            `;
+            
+            UI.showModal('attendeesModal');
+        }
+
+        loadClasses();
+    </script>
+</body>
+</html>

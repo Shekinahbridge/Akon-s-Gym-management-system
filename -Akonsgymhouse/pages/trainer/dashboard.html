@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trainer Dashboard - Akon's GymHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="sidebar-logo">AKON'S <span>GYMHOUSE</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html" class="active">📊 Dashboard</a></li>
+                    <li><a href="classes.html">📅 My Classes</a></li>
+                    <li><a href="attendance.html">📍 Attendance</a></li>
+                    <li><a href="schedule.html">🗓️ Schedule</a></li>
+                    <li><a href="profile.html">👤 Profile</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">T</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Trainer</div>
+                        <div class="user-role">Trainer</div>
+                    </div>
+                </div>
+                <button onclick="Auth.logout()" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 1rem;">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div style="margin-bottom: 2rem;">
+                <h1>Welcome, <span id="welcomeName">Trainer</span>! 💪</h1>
+                <p style="color: var(--text-secondary);">Here's your training schedule and class overview</p>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>My Classes</h4>
+                    <div class="value" id="totalClasses">0</div>
+                    <div class="change positive">Active classes</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Today's Classes</h4>
+                    <div class="value" id="todayClasses">0</div>
+                    <div class="change positive">Classes today</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Total Bookings</h4>
+                    <div class="value" id="totalBookings">0</div>
+                    <div class="change positive">All time bookings</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Attendance Rate</h4>
+                    <div class="value" id="attendanceRate">0%</div>
+                    <div class="change positive">Average attendance</div>
+                </div>
+            </div>
+
+            <!-- Today's Schedule -->
+            <div class="table-container" style="margin-top: 2rem;">
+                <div class="table-header">
+                    <h3>Today's Schedule</h3>
+                    <span id="todayDate" style="color: var(--text-secondary);"></span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Class</th>
+                            <th>Duration</th>
+                            <th>Bookings</th>
+                            <th>Capacity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="todaySchedule">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Upcoming Classes -->
+            <div class="table-container" style="margin-top: 2rem;">
+                <div class="table-header">
+                    <h3>Upcoming Classes This Week</h3>
+                    <a href="classes.html" class="btn btn-outline btn-sm">View All</a>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Class</th>
+                            <th>Bookings</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="upcomingClasses">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Recent Attendance -->
+            <div class="table-container" style="margin-top: 2rem;">
+                <div class="table-header">
+                    <h3>Recent Class Attendance</h3>
+                    <a href="attendance.html" class="btn btn-outline btn-sm">View All</a>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Class</th>
+                            <th>Booked</th>
+                            <th>Attended</th>
+                            <th>Attendance Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentAttendance">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mark Attendance Modal -->
+    <div class="modal-overlay" id="attendanceModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Mark Attendance</h3>
+                <button class="modal-close" onclick="UI.hideModal('attendanceModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="attendanceList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="UI.hideModal('attendanceModal')" class="btn btn-secondary">Close</button>
+                <button onclick="saveAttendance()" class="btn btn-primary">Save Attendance</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        if (!Auth.requireRole('trainer')) throw new Error('Unauthorized');
+
+        const currentUser = Auth.getUser();
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('welcomeName').textContent = currentUser.name.split(' ')[0];
+        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+        document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+        let currentClassId = null;
+        let currentClassDate = null;
+
+        function loadDashboard() {
+            const myClasses = DataStore.getClassesByTrainer(currentUser.id);
+            const allBookings = DataStore.getBookings();
+            
+            // Stats
+            document.getElementById('totalClasses').textContent = myClasses.length;
+            
+            // Today's classes
+            const todayName = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+            const dayMap = { 'Sun': 'Sun', 'Mon': 'Mon', 'Tue': 'Tue', 'Wed': 'Wed', 'Thu': 'Thu', 'Fri': 'Fri', 'Sat': 'Sat' };
+            const todayClasses = myClasses.filter(c => c.days.includes(dayMap[todayName]));
+            document.getElementById('todayClasses').textContent = todayClasses.length;
+            
+            // Total bookings for trainer's classes
+            const myClassIds = myClasses.map(c => c.id);
+            const myBookings = allBookings.filter(b => myClassIds.includes(b.classId));
+            document.getElementById('totalBookings').textContent = myBookings.length;
+            
+            // Attendance rate
+            const attended = myBookings.filter(b => b.status === 'attended').length;
+            const rate = myBookings.length > 0 ? Math.round((attended / myBookings.length) * 100) : 0;
+            document.getElementById('attendanceRate').textContent = rate + '%';
+
+            // Today's schedule
+            document.getElementById('todaySchedule').innerHTML = todayClasses.map(c => {
+                const bookings = allBookings.filter(b => b.classId === c.id && new Date(b.date).toDateString() === new Date().toDateString());
+                return `
+                    <tr>
+                        <td><strong>${c.time}</strong></td>
+                        <td>${c.name}</td>
+                        <td>${c.duration} min</td>
+                        <td>${bookings.length}</td>
+                        <td>${c.maxCapacity}</td>
+                        <td>
+                            <button onclick="markAttendance('${c.id}', '${new Date().toISOString().split('T')[0]}')" class="btn btn-sm btn-primary">Mark Attendance</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No classes today</td></tr>';
+
+            // Upcoming classes this week
+            const today = new Date();
+            const upcoming = [];
+            
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() + i);
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                
+                myClasses.forEach(c => {
+                    if (c.days.includes(dayMap[dayName])) {
+                        upcoming.push({
+                            date: date,
+                            class: c
+                        });
+                    }
+                });
+            }
+            
+            document.getElementById('upcomingClasses').innerHTML = upcoming.slice(0, 10).map(u => {
+                const bookings = allBookings.filter(b => b.classId === u.class.id && b.date === u.date.toISOString().split('T')[0]);
+                const isFull = bookings.length >= u.class.maxCapacity;
+                
+                return `
+                    <tr>
+                        <td>${UI.formatDate(u.date.toISOString())}</td>
+                        <td>${u.class.time}</td>
+                        <td><strong>${u.class.name}</strong></td>
+                        <td>${bookings.length} / ${u.class.maxCapacity}</td>
+                        <td><span class="status-badge ${isFull ? 'inactive' : 'active'}">${isFull ? 'Full' : 'Open'}</span></td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No upcoming classes</td></tr>';
+
+            // Recent attendance
+            const pastBookings = myBookings.filter(b => new Date(b.date) < today);
+            const groupedByClass = {};
+            
+            pastBookings.forEach(b => {
+                const key = b.classId + '_' + b.date;
+                if (!groupedByClass[key]) {
+                    groupedByClass[key] = { bookings: [], attended: 0, date: b.date, classId: b.classId };
+                }
+                groupedByClass[key].bookings.push(b);
+                if (b.status === 'attended') {
+                    groupedByClass[key].attended++;
+                }
+            });
+            
+            const recent = Object.values(groupedByClass).slice(-5).reverse();
+            
+            document.getElementById('recentAttendance').innerHTML = recent.map(r => {
+                const cls = DataStore.getClassById(r.classId);
+                const rate = r.bookings.length > 0 ? Math.round((r.attended / r.bookings.length) * 100) : 0;
+                
+                return `
+                    <tr>
+                        <td>${UI.formatDate(r.date)}</td>
+                        <td>${cls ? cls.name : 'Unknown'}</td>
+                        <td>${r.bookings.length}</td>
+                        <td>${r.attended}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div style="flex: 1; height: 8px; background-color: var(--wheat); border-radius: 4px; overflow: hidden;">
+                                    <div style="width: ${rate}%; height: 100%; background-color: ${rate >= 80 ? 'var(--success)' : rate >= 50 ? 'var(--warning)' : 'var(--danger)'};"></div>
+                                </div>
+                                <span style="font-size: 0.875rem; font-weight: 600;">${rate}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No recent classes</td></tr>';
+        }
+
+        function markAttendance(classId, date) {
+            currentClassId = classId;
+            currentClassDate = date;
+            
+            const bookings = DataStore.getBookings().filter(b => 
+                b.classId === classId && b.date === date
+            );
+            
+            if (bookings.length === 0) {
+                UI.toast('No bookings for this class', 'warning');
+                return;
+            }
+            
+            document.getElementById('attendanceList').innerHTML = bookings.map(b => {
+                const member = DataStore.getUserById(b.userId);
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background-color: var(--cream); border-radius: 8px; margin-bottom: 0.5rem;">
+                        <div>
+                            <strong>${member ? member.name : 'Unknown'}</strong>
+                            <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0;">${member ? member.email : ''}</p>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="attendance_${b.id}" value="attended" ${b.status === 'attended' ? 'checked' : ''}>
+                                <span style="color: var(--success);">Present</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="attendance_${b.id}" value="missed" ${b.status === 'missed' ? 'checked' : ''}>
+                                <span style="color: var(--danger);">Absent</span>
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            UI.showModal('attendanceModal');
+        }
+
+        function saveAttendance() {
+            const bookings = DataStore.getBookings().filter(b => 
+                b.classId === currentClassId && b.date === currentClassDate
+            );
+            
+            bookings.forEach(b => {
+                const attended = document.querySelector(`input[name="attendance_${b.id}"]:checked`);
+                if (attended) {
+                    DataStore.markAttendance(b.id, attended.value === 'attended');
+                }
+            });
+            
+            UI.toast('Attendance saved!', 'success');
+            UI.hideModal('attendanceModal');
+            loadDashboard();
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>

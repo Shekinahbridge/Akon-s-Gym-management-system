@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classes - Member - Akon's GymHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="sidebar-logo">AKON'S <span>GYMHOUSE</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html">📊 Dashboard</a></li>
+                    <li><a href="checkin.html">📍 Check-in</a></li>
+                    <li><a href="classes.html" class="active">📅 Classes</a></li>
+                    <li><a href="payments.html">💳 Payments</a></li>
+                    <li><a href="profile.html">👤 Profile</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">M</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Member</div>
+                        <div class="user-role">Member</div>
+                    </div>
+                </div>
+                <button onclick="Auth.logout()" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 1rem;">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div style="margin-bottom: 2rem;">
+                <h1>Classes</h1>
+                <p style="color: var(--text-secondary);">Book and manage your class schedule</p>
+            </div>
+
+            <!-- Tabs -->
+            <div style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 2px solid var(--wheat);">
+                <button onclick="showTab('available')" id="tab-available" class="btn" style="background: none; border: none; border-bottom: 3px solid var(--accent); border-radius: 0; padding-bottom: 0.75rem;">Available Classes</button>
+                <button onclick="showTab('upcoming')" id="tab-upcoming" class="btn" style="background: none; border: none; border-bottom: 3px solid transparent; border-radius: 0; padding-bottom: 0.75rem; color: var(--text-secondary);">My Upcoming</button>
+                <button onclick="showTab('past')" id="tab-past" class="btn" style="background: none; border: none; border-bottom: 3px solid transparent; border-radius: 0; padding-bottom: 0.75rem; color: var(--text-secondary);">Past Classes</button>
+            </div>
+
+            <!-- Available Classes -->
+            <div id="content-available">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;" id="availableClasses">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- My Upcoming Classes -->
+            <div id="content-upcoming" class="hidden">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Class</th>
+                                <th>Trainer</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="upcomingClasses">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Past Classes -->
+            <div id="content-past" class="hidden">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Class</th>
+                                <th>Trainer</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pastClasses">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Book Class Modal -->
+    <div class="modal-overlay" id="bookClassModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Book Class</h3>
+                <button class="modal-close" onclick="UI.hideModal('bookClassModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="bookClassForm">
+                    <input type="hidden" id="bookClassId">
+                    <div class="form-group">
+                        <label class="form-label">Class</label>
+                        <input type="text" id="bookClassName" class="form-input" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Select Date</label>
+                        <select id="bookClassDate" class="form-select" required>
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Time</label>
+                        <input type="text" id="bookClassTime" class="form-input" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Trainer</label>
+                        <input type="text" id="bookClassTrainer" class="form-input" readonly>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="UI.hideModal('bookClassModal')" class="btn btn-secondary">Cancel</button>
+                <button onclick="confirmBooking()" class="btn btn-primary">Confirm Booking</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        if (!Auth.requireRole('member')) throw new Error('Unauthorized');
+
+        const currentUser = Auth.getUser();
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+
+        let selectedClass = null;
+
+        function showTab(tab) {
+            // Hide all content
+            document.getElementById('content-available').classList.add('hidden');
+            document.getElementById('content-upcoming').classList.add('hidden');
+            document.getElementById('content-past').classList.add('hidden');
+            
+            // Reset tab styles
+            document.getElementById('tab-available').style.borderBottomColor = 'transparent';
+            document.getElementById('tab-available').style.color = 'var(--text-secondary)';
+            document.getElementById('tab-upcoming').style.borderBottomColor = 'transparent';
+            document.getElementById('tab-upcoming').style.color = 'var(--text-secondary)';
+            document.getElementById('tab-past').style.borderBottomColor = 'transparent';
+            document.getElementById('tab-past').style.color = 'var(--text-secondary)';
+            
+            // Show selected content
+            document.getElementById('content-' + tab).classList.remove('hidden');
+            document.getElementById('tab-' + tab).style.borderBottomColor = 'var(--accent)';
+            document.getElementById('tab-' + tab).style.color = 'var(--text-primary)';
+            
+            if (tab === 'available') loadAvailableClasses();
+            if (tab === 'upcoming') loadUpcomingClasses();
+            if (tab === 'past') loadPastClasses();
+        }
+
+        function loadAvailableClasses() {
+            const classes = DataStore.getClasses();
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            document.getElementById('availableClasses').innerHTML = classes.map(c => {
+                const trainer = DataStore.getUserById(c.trainerId);
+                const days = c.days.join(', ');
+                
+                return `
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="margin: 0;">${c.name}</h3>
+                                <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 0.25rem 0 0;">${trainer ? trainer.name : 'Unknown'}</p>
+                            </div>
+                            <span style="background-color: var(--cream); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">${c.time}</span>
+                        </div>
+                        <p style="font-size: 0.875rem; margin-bottom: 1rem;">
+                            <strong>Days:</strong> ${days}<br>
+                            <strong>Duration:</strong> ${c.duration} minutes<br>
+                            <strong>Capacity:</strong> ${c.maxCapacity} people
+                        </p>
+                        <button onclick="showBookModal('${c.id}')" class="btn btn-primary" style="width: 100%;">Book Class</button>
+                    </div>
+                `;
+            }).join('') || '<p style="text-align: center; padding: 2rem;">No classes available</p>';
+        }
+
+        function showBookModal(classId) {
+            selectedClass = DataStore.getClassById(classId);
+            if (!selectedClass) return;
+
+            const trainer = DataStore.getUserById(selectedClass.trainerId);
+            
+            document.getElementById('bookClassId').value = classId;
+            document.getElementById('bookClassName').value = selectedClass.name;
+            document.getElementById('bookClassTime').value = selectedClass.time;
+            document.getElementById('bookClassTrainer').value = trainer ? trainer.name : 'Unknown';
+            
+            // Generate next 4 weeks of dates
+            const dates = [];
+            const today = new Date();
+            const dayMap = { 'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6 };
+            
+            for (let week = 0; week < 4; week++) {
+                selectedClass.days.forEach(day => {
+                    const date = new Date(today);
+                    const targetDay = dayMap[day];
+                    const currentDay = date.getDay();
+                    let daysUntil = targetDay - currentDay + (week * 7);
+                    if (daysUntil < 0 && week === 0) daysUntil += 7;
+                    
+                    date.setDate(date.getDate() + daysUntil);
+                    if (date >= today) {
+                        dates.push({
+                            value: date.toISOString().split('T')[0],
+                            label: date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+                        });
+                    }
+                });
+            }
+            
+            dates.sort((a, b) => new Date(a.value) - new Date(b.value));
+            
+            document.getElementById('bookClassDate').innerHTML = dates.map(d => 
+                `<option value="${d.value}">${d.label}</option>`
+            ).join('');
+            
+            UI.showModal('bookClassModal');
+        }
+
+        function confirmBooking() {
+            const date = document.getElementById('bookClassDate').value;
+            
+            if (!date || !selectedClass) {
+                UI.toast('Please select a date', 'error');
+                return;
+            }
+
+            // Check if already booked
+            const existing = DataStore.getBookingsByUser(currentUser.id).find(b => 
+                b.classId === selectedClass.id && b.date === date
+            );
+            
+            if (existing) {
+                UI.toast('You have already booked this class for this date', 'warning');
+                return;
+            }
+
+            DataStore.addBooking({
+                userId: currentUser.id,
+                classId: selectedClass.id,
+                date: date
+            });
+
+            UI.toast('Class booked successfully!', 'success');
+            UI.hideModal('bookClassModal');
+            loadUpcomingClasses();
+        }
+
+        function loadUpcomingClasses() {
+            const bookings = DataStore.getUpcomingBookings(currentUser.id);
+            
+            document.getElementById('upcomingClasses').innerHTML = bookings.map(b => {
+                const cls = DataStore.getClassById(b.classId);
+                const trainer = cls ? DataStore.getUserById(cls.trainerId) : null;
+                
+                return `
+                    <tr>
+                        <td>${UI.formatDate(b.date)}</td>
+                        <td>${cls ? cls.time : '-'}</td>
+                        <td><strong>${cls ? cls.name : 'Unknown'}</strong></td>
+                        <td>${trainer ? trainer.name : '-'}</td>
+                        <td><span class="status-badge active">Booked</span></td>
+                        <td>
+                            <button onclick="cancelBooking('${b.id}')" class="btn btn-sm btn-danger">Cancel</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No upcoming classes</td></tr>';
+        }
+
+        function cancelBooking(bookingId) {
+            if (confirm('Are you sure you want to cancel this booking?')) {
+                DataStore.cancelBooking(bookingId);
+                UI.toast('Booking cancelled', 'success');
+                loadUpcomingClasses();
+            }
+        }
+
+        function loadPastClasses() {
+            const bookings = DataStore.getPastBookings(currentUser.id);
+            
+            document.getElementById('pastClasses').innerHTML = bookings.map(b => {
+                const cls = DataStore.getClassById(b.classId);
+                const trainer = cls ? DataStore.getUserById(cls.trainerId) : null;
+                
+                let statusClass = 'pending';
+                let statusText = 'Unknown';
+                
+                if (b.status === 'attended') {
+                    statusClass = 'active';
+                    statusText = 'Attended';
+                } else if (b.status === 'missed') {
+                    statusClass = 'inactive';
+                    statusText = 'Missed';
+                } else if (b.status === 'cancelled') {
+                    statusClass = 'inactive';
+                    statusText = 'Cancelled';
+                } else {
+                    statusText = 'Booked';
+                }
+                
+                return `
+                    <tr>
+                        <td>${UI.formatDate(b.date)}</td>
+                        <td><strong>${cls ? cls.name : 'Unknown'}</strong></td>
+                        <td>${trainer ? trainer.name : '-'}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="4" style="text-align: center; padding: 2rem;">No past classes</td></tr>';
+        }
+
+        // Load initial tab
+        showTab('available');
+    </script>
+</body>
+</html>

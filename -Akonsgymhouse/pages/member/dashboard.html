@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Dashboard - Akon's GymHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="sidebar-logo">AKON'S <span>GYMHOUSE</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html" class="active">📊 Dashboard</a></li>
+                    <li><a href="checkin.html">📍 Check-in</a></li>
+                    <li><a href="classes.html">📅 Classes</a></li>
+                    <li><a href="payments.html">💳 Payments</a></li>
+                    <li><a href="profile.html">👤 Profile</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">M</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Member</div>
+                        <div class="user-role">Member</div>
+                    </div>
+                </div>
+                <button onclick="Auth.logout()" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 1rem;">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div style="margin-bottom: 2rem;">
+                <h1>Welcome back, <span id="welcomeName">Member</span>! 👋</h1>
+                <p style="color: var(--text-secondary);">Here's your fitness journey at a glance</p>
+            </div>
+
+            <!-- Membership Status -->
+            <div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, var(--accent) 0%, #8F3E00 100%); color: white;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <p style="color: rgba(255,255,255,0.8); margin-bottom: 0.5rem;">Current Plan</p>
+                        <h2 id="currentPlan" style="color: white; margin: 0;">No Active Plan</h2>
+                        <p id="planExpiry" style="color: rgba(255,255,255,0.8); margin-top: 0.5rem;">-</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="color: rgba(255,255,255,0.8); margin-bottom: 0.5rem;">Status</p>
+                        <span id="membershipStatus" class="status-badge" style="background-color: rgba(255,255,255,0.2); color: white;">Inactive</span>
+                    </div>
+                </div>
+                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                    <button onclick="showUpgradeModal()" class="btn" style="background-color: white; color: var(--accent);">Upgrade Plan</button>
+                    <button onclick="renewPlan()" class="btn btn-outline" style="border-color: white; color: white;">Renew Now</button>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Total Check-ins</h4>
+                    <div class="value" id="totalCheckins">0</div>
+                    <div class="change positive">Keep it up!</div>
+                </div>
+                <div class="stat-card">
+                    <h4>This Month</h4>
+                    <div class="value" id="monthlyCheckins">0</div>
+                    <div class="change positive">Check-ins this month</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Classes Booked</h4>
+                    <div class="value" id="classesBooked">0</div>
+                    <div class="change positive">Upcoming classes</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Streak</h4>
+                    <div class="value" id="checkinStreak">0</div>
+                    <div class="change positive">Days in a row</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
+                <div class="card" style="text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📍</div>
+                    <h3>Quick Check-in</h3>
+                    <p style="font-size: 0.875rem; margin: 0.5rem 0 1rem;">Record your attendance for today</p>
+                    <button onclick="quickCheckin()" id="quickCheckinBtn" class="btn btn-primary" style="width: 100%;">Check In Now</button>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
+                    <h3>Book a Class</h3>
+                    <p style="font-size: 0.875rem; margin: 0.5rem 0 1rem;">Reserve your spot in upcoming classes</p>
+                    <a href="classes.html" class="btn btn-primary" style="width: 100%;">Browse Classes</a>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">💳</div>
+                    <h3>Payment History</h3>
+                    <p style="font-size: 0.875rem; margin: 0.5rem 0 1rem;">View and download your receipts</p>
+                    <a href="payments.html" class="btn btn-primary" style="width: 100%;">View Payments</a>
+                </div>
+            </div>
+
+            <!-- Upcoming Classes -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Your Upcoming Classes</h3>
+                    <a href="classes.html" class="btn btn-outline btn-sm">View All</a>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Class</th>
+                            <th>Trainer</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="upcomingClasses">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="table-container" style="margin-top: 2rem;">
+                <div class="table-header">
+                    <h3>Recent Check-ins</h3>
+                    <a href="checkin.html" class="btn btn-outline btn-sm">View All</a>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Day</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentCheckins">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Upgrade Plan Modal -->
+    <div class="modal-overlay" id="upgradeModal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3>Upgrade Your Plan</h3>
+                <button class="modal-close" onclick="UI.hideModal('upgradeModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="upgradePlans">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- M-Pesa Payment Modal -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Complete Payment</h3>
+                <button class="modal-close" onclick="UI.hideModal('paymentModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="mpesa-container">
+                    <div class="mpesa-logo">M</div>
+                    <h3>M-Pesa Payment</h3>
+                    <p id="paymentAmountDisplay" style="font-size: 1.5rem; font-weight: 700; color: var(--accent); margin: 1rem 0;"></p>
+                    <div class="mpesa-instructions">
+                        <p style="margin-bottom: 1rem;">Follow these steps:</p>
+                        <ol>
+                            <li>Enter your M-Pesa number below</li>
+                            <li>Click "Pay Now"</li>
+                            <li>Check your phone for STK push</li>
+                            <li>Enter your M-Pesa PIN</li>
+                        </ol>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">M-Pesa Number</label>
+                        <input type="tel" id="mpesaNumber" class="form-input" placeholder="254712345678" required>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="UI.hideModal('paymentModal')" class="btn btn-secondary">Cancel</button>
+                <button onclick="processPayment()" id="payNowBtn" class="btn btn-success">Pay Now</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        if (!Auth.requireRole('member')) throw new Error('Unauthorized');
+
+        const currentUser = Auth.getUser();
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('welcomeName').textContent = currentUser.name.split(' ')[0];
+        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+
+        let selectedPlan = null;
+
+        function loadDashboard() {
+            // Membership status
+            const plan = DataStore.getPlanById(currentUser.plan);
+            if (plan) {
+                document.getElementById('currentPlan').textContent = plan.name + ' Plan';
+                document.getElementById('planExpiry').textContent = 'Expires: ' + (currentUser.planExpiry ? UI.formatDate(currentUser.planExpiry) : 'N/A');
+                
+                const isActive = new Date(currentUser.planExpiry) > new Date();
+                document.getElementById('membershipStatus').textContent = isActive ? 'Active' : 'Expired';
+                document.getElementById('membershipStatus').className = 'status-badge ' + (isActive ? 'active' : 'inactive');
+            }
+
+            // Check-ins
+            const checkins = DataStore.getCheckinsByUser(currentUser.id);
+            document.getElementById('totalCheckins').textContent = checkins.length;
+
+            // Monthly check-ins
+            const now = new Date();
+            const monthlyCheckins = checkins.filter(c => {
+                const date = new Date(c.date);
+                return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+            });
+            document.getElementById('monthlyCheckins').textContent = monthlyCheckins.length;
+
+            // Streak
+            document.getElementById('checkinStreak').textContent = calculateStreak(checkins);
+
+            // Check if checked in today
+            const todayCheckin = DataStore.getTodayCheckin(currentUser.id);
+            const checkinBtn = document.getElementById('quickCheckinBtn');
+            if (todayCheckin) {
+                checkinBtn.textContent = '✓ Checked In Today';
+                checkinBtn.disabled = true;
+            }
+
+            // Upcoming classes
+            const bookings = DataStore.getUpcomingBookings(currentUser.id);
+            document.getElementById('classesBooked').textContent = bookings.length;
+
+            document.getElementById('upcomingClasses').innerHTML = bookings.slice(0, 5).map(b => {
+                const cls = DataStore.getClassById(b.classId);
+                const trainer = cls ? DataStore.getUserById(cls.trainerId) : null;
+                return `
+                    <tr>
+                        <td>${UI.formatDate(b.date)}</td>
+                        <td>${cls ? cls.time : '-'}</td>
+                        <td><strong>${cls ? cls.name : 'Unknown'}</strong></td>
+                        <td>${trainer ? trainer.name : '-'}</td>
+                        <td><span class="status-badge active">Booked</span></td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No upcoming classes</td></tr>';
+
+            // Recent check-ins
+            document.getElementById('recentCheckins').innerHTML = checkins.slice(-5).reverse().map(c => {
+                const date = new Date(c.date);
+                return `
+                    <tr>
+                        <td>${UI.formatDate(c.date)}</td>
+                        <td>${c.time}</td>
+                        <td>${date.toLocaleDateString('en-US', { weekday: 'long' })}</td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="3" style="text-align: center; padding: 2rem;">No check-ins yet</td></tr>';
+        }
+
+        function calculateStreak(checkins) {
+            if (checkins.length === 0) return 0;
+            
+            const sorted = checkins.sort((a, b) => new Date(b.date) - new Date(a.date));
+            let streak = 0;
+            let currentDate = new Date();
+            currentDate.setHours(0, 0, 0, 0);
+            
+            for (const checkin of sorted) {
+                const checkinDate = new Date(checkin.date);
+                checkinDate.setHours(0, 0, 0, 0);
+                
+                const diffDays = Math.floor((currentDate - checkinDate) / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === streak || (streak === 0 && diffDays === 0)) {
+                    streak++;
+                    currentDate = new Date(checkinDate);
+                    currentDate.setDate(currentDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+            
+            return streak;
+        }
+
+        function quickCheckin() {
+            if (DataStore.getTodayCheckin(currentUser.id)) {
+                UI.toast('You have already checked in today!', 'warning');
+                return;
+            }
+
+            DataStore.addCheckin(currentUser.id);
+            UI.toast('Check-in successful! Keep up the good work!', 'success');
+            
+            const checkinBtn = document.getElementById('quickCheckinBtn');
+            checkinBtn.textContent = '✓ Checked In Today';
+            checkinBtn.disabled = true;
+            
+            loadDashboard();
+        }
+
+        function showUpgradeModal() {
+            const plans = DataStore.getPlans();
+            const currentPlan = currentUser.plan;
+            
+            document.getElementById('upgradePlans').innerHTML = plans.map(plan => `
+                <div class="pricing-card ${plan.featured ? 'featured' : ''} ${currentPlan === plan.id ? 'selected' : ''}" 
+                     data-plan-id="${plan.id}"
+                     style="cursor: pointer; margin-bottom: 1rem; ${currentPlan === plan.id ? 'border: 2px solid var(--accent);' : ''}">
+                    ${plan.featured ? '<div class="pricing-badge">Most Popular</div>' : ''}
+                    ${currentPlan === plan.id ? '<div class="pricing-badge" style="left: 0; right: auto; border-radius: 0 0 12px 0;">Current</div>' : ''}
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="margin: 0;">${plan.name}</h4>
+                            <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0.25rem 0 0;">${plan.description}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent);">KES ${plan.price.toLocaleString()}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">per week</div>
+                        </div>
+                    </div>
+                    <ul class="pricing-features" style="margin: 1rem 0 0; font-size: 0.875rem;">
+                        ${plan.features.map(f => `<li>${f}</li>`).join('')}
+                    </ul>
+                    ${currentPlan !== plan.id ? `
+                        <button onclick="selectUpgradePlan('${plan.id}')" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Select Plan</button>
+                    ` : ''}
+                </div>
+            `).join('');
+            
+            UI.showModal('upgradeModal');
+        }
+
+        function selectUpgradePlan(planId) {
+            selectedPlan = DataStore.getPlanById(planId);
+            UI.hideModal('upgradeModal');
+            document.getElementById('paymentAmountDisplay').textContent = 'KES ' + selectedPlan.price.toLocaleString();
+            UI.showModal('paymentModal');
+        }
+
+        function renewPlan() {
+            const plan = DataStore.getPlanById(currentUser.plan);
+            if (!plan) {
+                showUpgradeModal();
+                return;
+            }
+            selectedPlan = plan;
+            document.getElementById('paymentAmountDisplay').textContent = 'KES ' + plan.price.toLocaleString();
+            UI.showModal('paymentModal');
+        }
+
+        async function processPayment() {
+            const mpesaNumber = document.getElementById('mpesaNumber').value;
+            
+            if (!mpesaNumber || mpesaNumber.length < 10) {
+                UI.toast('Please enter a valid M-Pesa number', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('payNowBtn');
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+
+            const result = await MPesa.initiatePayment(mpesaNumber, selectedPlan.price, selectedPlan.name + ' Plan');
+
+            if (result.success) {
+                // Record payment
+                DataStore.addPayment({
+                    userId: currentUser.id,
+                    planId: selectedPlan.id,
+                    amount: selectedPlan.price,
+                    transactionId: result.transactionId,
+                    phone: mpesaNumber,
+                    status: 'completed'
+                });
+
+                // Update user plan
+                DataStore.updateUser(currentUser.id, {
+                    plan: selectedPlan.id,
+                    planExpiry: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+                });
+
+                // Update current user in Auth
+                Auth.currentUser.plan = selectedPlan.id;
+                Auth.currentUser.planExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+                sessionStorage.setItem('gymhouse_current_user', JSON.stringify(Auth.currentUser));
+
+                UI.toast('Payment successful! Your plan has been updated.', 'success');
+                UI.hideModal('paymentModal');
+                loadDashboard();
+            } else {
+                UI.toast(result.error, 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Pay Now';
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>

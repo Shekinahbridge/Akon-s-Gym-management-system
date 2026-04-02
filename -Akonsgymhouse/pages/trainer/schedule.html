@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule - Trainer - Akon's GymHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="sidebar-logo">AKON'S <span>GYMHOUSE</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html">📊 Dashboard</a></li>
+                    <li><a href="classes.html">📅 My Classes</a></li>
+                    <li><a href="attendance.html">📍 Attendance</a></li>
+                    <li><a href="schedule.html" class="active">🗓️ Schedule</a></li>
+                    <li><a href="profile.html">👤 Profile</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">T</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Trainer</div>
+                        <div class="user-role">Trainer</div>
+                    </div>
+                </div>
+                <button onclick="Auth.logout()" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 1rem;">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div style="margin-bottom: 2rem;">
+                <h1>My Schedule</h1>
+                <p style="color: var(--text-secondary);">Your weekly class schedule</p>
+            </div>
+
+            <!-- Weekly Schedule -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin: 0;">Weekly Schedule</h3>
+                    <button onclick="printSchedule()" class="btn btn-outline btn-sm">🖨️ Print</button>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Monday</th>
+                                <th>Tuesday</th>
+                                <th>Wednesday</th>
+                                <th>Thursday</th>
+                                <th>Friday</th>
+                                <th>Saturday</th>
+                                <th>Sunday</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleTable">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Class Details -->
+            <div class="card" style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 1.5rem;">My Classes</h3>
+                <div id="classDetails" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        if (!Auth.requireRole('trainer')) throw new Error('Unauthorized');
+
+        const currentUser = Auth.getUser();
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+
+        function loadSchedule() {
+            const myClasses = DataStore.getClassesByTrainer(currentUser.id);
+            const dayMap = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 0 };
+            
+            // Get unique time slots
+            const timeSlots = [...new Set(myClasses.map(c => c.time))].sort();
+            
+            // Build schedule table
+            document.getElementById('scheduleTable').innerHTML = timeSlots.map(time => {
+                const classesAtTime = myClasses.filter(c => c.time === time);
+                
+                return `
+                    <tr>
+                        <td><strong>${time}</strong></td>
+                        ${[1, 2, 3, 4, 5, 6, 0].map(day => {
+                            const cls = classesAtTime.find(c => c.days.some(d => dayMap[d] === day));
+                            if (cls) {
+                                return `
+                                    <td style="background-color: var(--cream);">
+                                        <strong>${cls.name}</strong>
+                                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0;">${cls.duration} min</p>
+                                    </td>
+                                `;
+                            }
+                            return '<td>-</td>';
+                        }).join('')}
+                    </tr>
+                `;
+            }).join('');
+
+            // Class details
+            document.getElementById('classDetails').innerHTML = myClasses.map(c => `
+                <div style="background-color: var(--cream); padding: 1rem; border-radius: 12px;">
+                    <h4 style="margin: 0 0 0.5rem;">${c.name}</h4>
+                    <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0;">
+                        <strong>Days:</strong> ${c.days.join(', ')}<br>
+                        <strong>Time:</strong> ${c.time}<br>
+                        <strong>Duration:</strong> ${c.duration} minutes<br>
+                        <strong>Capacity:</strong> ${c.maxCapacity} people
+                    </p>
+                </div>
+            `).join('') || '<p>No classes assigned</p>';
+        }
+
+        function printSchedule() {
+            window.print();
+        }
+
+        loadSchedule();
+    </script>
+</body>
+</html>
