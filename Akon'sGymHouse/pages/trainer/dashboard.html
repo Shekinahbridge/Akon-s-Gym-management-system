@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trainer Dashboard - Akon's GymHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="sidebar-logo">AKON'S <span>GYMHOUSE</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html" class="active">📊 Dashboard</a></li>
+                    <li><a href="classes.html">📅 My Classes</a></li>
+                    <li><a href="attendance.html">📍 Attendance</a></li>
+                    <li><a href="schedule.html">🗓️ Schedule</a></li>
+                    <li><a href="profile.html">👤 Profile</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">T</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Trainer</div>
+                        <div class="user-role">Trainer</div>
+                    </div>
+                </div>
+                <button onclick="Auth.logout()" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 1rem;">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div style="margin-bottom: 2rem;">
+                <h1>Welcome, <span id="welcomeName">Trainer</span>!</h1>
+                <p style="color: var(--text-secondary);">Here's your trainer summary</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>My Classes</h4>
+                    <div class="value" id="myClasses">0</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Total Bookings</h4>
+                    <div class="value" id="totalBookings">0</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Today's Classes</h4>
+                    <div class="value" id="todayClasses">0</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Attendance Rate</h4>
+                    <div class="value" id="attendanceRate">0%</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem;">Quick Actions</h3>
+                    <div style="display: grid; gap: 1rem;">
+                        <a href="attendance.html" class="btn btn-primary">📍 Mark Attendance</a>
+                        <a href="schedule.html" class="btn btn-outline">🗓️ View Schedule</a>
+                        <a href="classes.html" class="btn btn-outline">📅 My Classes</a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem;">Today's Schedule</h3>
+                    <div id="todaySchedule">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        if (!Auth.requireRole('trainer')) throw new Error('Unauthorized');
+
+        const currentUser = Auth.getUser();
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+        document.getElementById('welcomeName').textContent = currentUser.name.split(' ')[0];
+
+        async function loadDashboard() {
+            const classes = await DataStore.getClassesByTrainer(currentUser.id);
+            const bookings = await DataStore.getBookings();
+            
+            const myClassIds = classes.map(c => c.id);
+            const myBookings = bookings.filter(b => myClassIds.includes(b.class_id));
+            
+            document.getElementById('myClasses').textContent = classes.length;
+            document.getElementById('totalBookings').textContent = myBookings.length;
+
+            const todayName = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+            const dayMap = { 'Sun': 'Sun', 'Mon': 'Mon', 'Tue': 'Tue', 'Wed': 'Wed', 'Thu': 'Thu', 'Fri': 'Fri', 'Sat': 'Sat' };
+            const todayClasses = classes.filter(c => c.days.includes(dayMap[todayName]));
+            document.getElementById('todayClasses').textContent = todayClasses.length;
+
+            const attended = myBookings.filter(b => b.status === 'attended').length;
+            const rate = myBookings.length > 0 ? Math.round((attended / myBookings.length) * 100) : 0;
+            document.getElementById('attendanceRate').textContent = rate + '%';
+
+            document.getElementById('todaySchedule').innerHTML = todayClasses.map(c => `
+                <div style="padding: 1rem; background-color: var(--cream); border-radius: 8px; margin-bottom: 0.5rem;">
+                    <strong>${c.time}</strong> - ${c.name}
+                </div>
+            `).join('') || '<p>No classes today</p>';
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>

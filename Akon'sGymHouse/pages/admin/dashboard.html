@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Akon's GymHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="sidebar-logo">AKON'S <span>GYMHOUSE</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html" class="active">📊 Dashboard</a></li>
+                    <li><a href="members.html">👥 Members</a></li>
+                    <li><a href="trainers.html">💪 Trainers</a></li>
+                    <li><a href="classes.html">📅 Classes</a></li>
+                    <li><a href="payments.html">💳 Payments</a></li>
+                    <li><a href="reports.html">📈 Reports</a></li>
+                    <li><a href="settings.html">⚙️ Settings</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Admin</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                </div>
+                <button onclick="Auth.logout()" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 1rem;">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div>
+                    <h1>Dashboard</h1>
+                    <p style="color: var(--text-secondary);">Welcome back! Here's what's happening today.</p>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button onclick="generateDailyReport()" class="btn btn-outline">📄 Daily Report</button>
+                    <button onclick="showAddMemberModal()" class="btn btn-primary">+ Add Member</button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Total Members</h4>
+                    <div class="value" id="totalMembers">0</div>
+                    <div class="change positive">↑ Active gym members</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Today's Check-ins</h4>
+                    <div class="value" id="todayCheckins">0</div>
+                    <div class="change positive">↑ Members checked in today</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Weekly Revenue</h4>
+                    <div class="value" id="weeklyRevenue">KES 0</div>
+                    <div class="change positive">↑ This week's payments</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Active Classes</h4>
+                    <div class="value" id="activeClasses">0</div>
+                    <div class="change positive">↑ Weekly classes</div>
+                </div>
+            </div>
+
+            <!-- Recent Members -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Recent Members</h3>
+                    <a href="members.html" class="btn btn-outline btn-sm">View All</a>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Plan</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentMembersTable">
+                        <tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Recent Payments -->
+            <div class="table-container" style="margin-top: 2rem;">
+                <div class="table-header">
+                    <h3>Recent Payments</h3>
+                    <a href="payments.html" class="btn btn-outline btn-sm">View All</a>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Plan</th>
+                            <th>Amount</th>
+                            <th>Transaction ID</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentPaymentsTable">
+                        <tr><td colspan="6" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Today's Classes -->
+            <div class="table-container" style="margin-top: 2rem;">
+                <div class="table-header">
+                    <h3>Today's Classes</h3>
+                    <a href="classes.html" class="btn btn-outline btn-sm">Manage Classes</a>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Class</th>
+                            <th>Trainer</th>
+                            <th>Bookings</th>
+                            <th>Capacity</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="todayClassesTable">
+                        <tr><td colspan="6" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Member Modal -->
+    <div class="modal-overlay hidden" id="addMemberModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Add New Member</h3>
+                <button class="modal-close" onclick="UI.hideModal('addMemberModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addMemberForm">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" id="newMemberName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="newMemberEmail" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" id="newMemberPhone" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Membership Plan</label>
+                        <select id="newMemberPlan" class="form-select" required>
+                            <option value="">Select Plan</option>
+                            <option value="basic">Basic - KES 2,500/week</option>
+                            <option value="standard">Standard - KES 4,000/week</option>
+                            <option value="premium">Premium - KES 6,500/week</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="newMemberPassword" class="form-input" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="UI.hideModal('addMemberModal')" class="btn btn-secondary">Cancel</button>
+                <button onclick="addMember()" class="btn btn-primary">Add Member</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        // Check auth
+        if (!Auth.requireRole('admin')) {
+            throw new Error('Unauthorized');
+        }
+
+        // Load user info
+        const currentUser = Auth.getUser();
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+
+        // Load dashboard data
+        async function loadDashboard() {
+            // Stats
+            const stats = await DataStore.getStats();
+            document.getElementById('totalMembers').textContent = stats.totalMembers || 0;
+            document.getElementById('todayCheckins').textContent = stats.todayCheckins || 0;
+            document.getElementById('weeklyRevenue').textContent = 'KES ' + (stats.weeklyRevenue || 0).toLocaleString();
+            document.getElementById('activeClasses').textContent = stats.activeClasses || 0;
+
+            // Recent members
+            const members = await DataStore.getUsers('member');
+            const plans = await DataStore.getPlans();
+            const plansMap = {};
+            plans.forEach(p => plansMap[p.id] = p);
+            
+            const recentMembers = members.slice(-5).reverse();
+            document.getElementById('recentMembersTable').innerHTML = recentMembers.map(m => {
+                const plan = plansMap[m.plan];
+                const isActive = m.plan && new Date(m.plan_expiry) > new Date();
+                return `
+                    <tr>
+                        <td><strong>${m.name}</strong></td>
+                        <td>${m.email}</td>
+                        <td>${m.phone}</td>
+                        <td>${plan ? plan.name : 'None'}</td>
+                        <td><span class="status-badge ${isActive ? 'active' : 'inactive'}">${isActive ? 'Active' : 'Inactive'}</span></td>
+                        <td>${UI.formatDate(m.created_at)}</td>
+                        <td>
+                            <button onclick="editMember('${m.id}')" class="btn btn-sm btn-outline">Edit</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No members yet</td></tr>';
+
+            // Recent payments
+            const payments = await DataStore.getPayments();
+            const usersMap = {};
+            members.forEach(m => usersMap[m.id] = m);
+            
+            const recentPayments = payments.slice(-5).reverse();
+            document.getElementById('recentPaymentsTable').innerHTML = recentPayments.map(p => {
+                const user = usersMap[p.user_id];
+                const plan = plansMap[p.plan_id];
+                return `
+                    <tr>
+                        <td>${user ? user.name : 'Unknown'}</td>
+                        <td>${plan ? plan.name : 'Unknown'}</td>
+                        <td><strong>KES ${p.amount.toLocaleString()}</strong></td>
+                        <td><code>${p.transaction_id}</code></td>
+                        <td>${UI.formatDate(p.created_at)}</td>
+                        <td><span class="status-badge active">Completed</span></td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No payments yet</td></tr>';
+
+            // Today's classes
+            const classes = await DataStore.getClasses();
+            const trainers = await DataStore.getUsers('trainer');
+            const trainersMap = {};
+            trainers.forEach(t => trainersMap[t.id] = t);
+            
+            const todayName = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+            const dayMap = { 'Mon': 'Mon', 'Tue': 'Tue', 'Wed': 'Wed', 'Thu': 'Thu', 'Fri': 'Fri', 'Sat': 'Sat', 'Sun': 'Sun' };
+            const todayClasses = classes.filter(c => c.days.includes(dayMap[todayName]));
+            
+            const bookings = await DataStore.getBookings();
+            
+            document.getElementById('todayClassesTable').innerHTML = todayClasses.map(c => {
+                const trainer = trainersMap[c.trainer_id];
+                const classBookings = bookings.filter(b => b.class_id === c.id).length;
+                return `
+                    <tr>
+                        <td><strong>${c.time}</strong></td>
+                        <td>${c.name}</td>
+                        <td>${trainer ? trainer.name : 'Unknown'}</td>
+                        <td>${classBookings}</td>
+                        <td>${c.maxCapacity}</td>
+                        <td><span class="status-badge ${classBookings >= c.maxCapacity ? 'inactive' : 'active'}">${classBookings >= c.maxCapacity ? 'Full' : 'Open'}</span></td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No classes today</td></tr>';
+        }
+
+        function showAddMemberModal() {
+            UI.showModal('addMemberModal');
+        }
+
+        async function addMember() {
+            const name = document.getElementById('newMemberName').value;
+            const email = document.getElementById('newMemberEmail').value;
+            const phone = document.getElementById('newMemberPhone').value;
+            const plan = document.getElementById('newMemberPlan').value;
+            const password = document.getElementById('newMemberPassword').value;
+
+            if (!name || !email || !phone || !plan || !password) {
+                UI.toast('Please fill all fields', 'error');
+                return;
+            }
+
+            const existing = await DataStore.getUserByEmail(email);
+            if (existing) {
+                UI.toast('Email already registered', 'error');
+                return;
+            }
+
+            const plans = await DataStore.getPlans();
+            const planData = plans.find(p => p.id === plan);
+            
+            const user = await DataStore.addUser({
+                name,
+                email,
+                phone,
+                password,
+                role: 'member',
+                plan,
+                planExpiry: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            });
+
+            if (user) {
+                // Add payment record
+                await DataStore.addPayment({
+                    userId: user.id,
+                    planId: plan,
+                    amount: planData.price,
+                    transactionId: 'CASH' + Date.now(),
+                    phone: phone,
+                    status: 'completed'
+                });
+
+                UI.toast('Member added successfully!', 'success');
+                UI.hideModal('addMemberModal');
+                document.getElementById('addMemberForm').reset();
+                loadDashboard();
+            }
+        }
+
+        function editMember(id) {
+            window.location.href = 'members.html?edit=' + id;
+        }
+
+        async function generateDailyReport() {
+            const members = await DataStore.getUsers('member');
+            const checkins = await DataStore.getCheckins();
+            const payments = await DataStore.getPayments();
+            
+            const today = new Date().toDateString();
+            const todayCheckins = checkins.filter(c => new Date(c.date).toDateString() === today);
+            const todayPayments = payments.filter(p => new Date(p.created_at).toDateString() === today);
+            
+            const report = {
+                title: 'Daily Report - Akon\'s GymHouse',
+                generatedAt: new Date().toISOString(),
+                totalMembers: members.length,
+                todayCheckins: todayCheckins.length,
+                todayPayments: todayPayments,
+                data: todayPayments.map(p => ({
+                    Member: p.user_name,
+                    Plan: p.plan_name,
+                    Amount: 'KES ' + p.amount.toLocaleString(),
+                    'Transaction ID': p.transaction_id
+                }))
+            };
+            
+            Reports.printReport(report);
+        }
+
+        // Load on page load
+        loadDashboard();
+    </script>
+</body>
+</html>

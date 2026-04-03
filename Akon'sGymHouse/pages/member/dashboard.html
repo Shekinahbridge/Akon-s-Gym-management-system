@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Dashboard - Akon's GymHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="sidebar-logo">AKON'S <span>GYMHOUSE</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html" class="active">📊 Dashboard</a></li>
+                    <li><a href="checkin.html">📍 Check-in</a></li>
+                    <li><a href="classes.html">📅 Classes</a></li>
+                    <li><a href="payments.html">💳 Payments</a></li>
+                    <li><a href="profile.html">👤 Profile</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">M</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Member</div>
+                        <div class="user-role">Member</div>
+                    </div>
+                </div>
+                <button onclick="Auth.logout()" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 1rem;">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div style="margin-bottom: 2rem;">
+                <h1>Welcome back, <span id="welcomeName">Member</span>!</h1>
+                <p style="color: var(--text-secondary);">Here's your fitness summary</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Current Plan</h4>
+                    <div class="value" id="currentPlan">-</div>
+                    <div class="change" id="planStatus">Loading...</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Total Check-ins</h4>
+                    <div class="value" id="totalCheckins">0</div>
+                    <div class="change positive">Keep it up!</div>
+                </div>
+                <div class="stat-card">
+                    <h4>This Month</h4>
+                    <div class="value" id="monthlyCheckins">0</div>
+                    <div class="change positive">Check-ins this month</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Classes Booked</h4>
+                    <div class="value" id="classesBooked">0</div>
+                    <div class="change positive">Upcoming classes</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem;">Quick Actions</h3>
+                    <div style="display: grid; gap: 1rem;">
+                        <a href="checkin.html" class="btn btn-primary">📍 Check In Now</a>
+                        <a href="classes.html" class="btn btn-outline">📅 Book a Class</a>
+                        <a href="profile.html" class="btn btn-outline">👤 View Profile</a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem;">Membership Status</h3>
+                    <div id="membershipInfo">
+                        <p><strong>Plan:</strong> <span id="planName">-</span></p>
+                        <p><strong>Expiry:</strong> <span id="planExpiry">-</span></p>
+                        <p><strong>Status:</strong> <span id="membershipStatus">-</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 1.5rem;">Recent Activity</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Activity</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentActivity">
+                        <tr><td colspan="3" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        if (!Auth.requireRole('member')) throw new Error('Unauthorized');
+
+        const currentUser = Auth.getUser();
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+        document.getElementById('welcomeName').textContent = currentUser.name.split(' ')[0];
+
+        async function loadDashboard() {
+            const plans = await DataStore.getPlans();
+            const plan = plans.find(p => p.id === currentUser.plan);
+            
+            document.getElementById('currentPlan').textContent = plan ? plan.name : 'No Plan';
+            
+            const isActive = currentUser.plan && new Date(currentUser.plan_expiry) > new Date();
+            document.getElementById('planStatus').textContent = isActive ? '✓ Active' : '✗ Inactive';
+            document.getElementById('planStatus').className = isActive ? 'change positive' : 'change negative';
+            
+            document.getElementById('planName').textContent = plan ? plan.name : 'None';
+            document.getElementById('planExpiry').textContent = currentUser.plan_expiry ? UI.formatDate(currentUser.plan_expiry) : '-';
+            document.getElementById('membershipStatus').innerHTML = isActive ? 
+                '<span class="status-badge active">Active</span>' : 
+                '<span class="status-badge inactive">Inactive</span>';
+
+            const checkins = await DataStore.getCheckinsByUser(currentUser.id);
+            document.getElementById('totalCheckins').textContent = checkins.length;
+
+            const now = new Date();
+            const thisMonth = checkins.filter(c => {
+                const date = new Date(c.date);
+                return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+            });
+            document.getElementById('monthlyCheckins').textContent = thisMonth.length;
+
+            const bookings = await DataStore.getBookingsByUser(currentUser.id);
+            document.getElementById('classesBooked').textContent = bookings.length;
+
+            // Recent activity
+            const payments = await DataStore.getPaymentsByUser(currentUser.id);
+            const activity = [
+                ...checkins.map(c => ({ type: 'Check-in', date: c.date, details: c.time })),
+                ...payments.map(p => ({ type: 'Payment', date: p.created_at, details: 'KES ' + p.amount.toLocaleString() })),
+                ...bookings.map(b => ({ type: 'Booking', date: b.date, details: b.class_name }))
+            ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+
+            document.getElementById('recentActivity').innerHTML = activity.map(a => `
+                <tr>
+                    <td>${UI.formatDate(a.date)}</td>
+                    <td>${a.type}</td>
+                    <td>${a.details}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="3" style="text-align: center; padding: 2rem;">No activity yet</td></tr>';
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>

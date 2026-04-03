@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payments - Member - Akon's GymHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="sidebar-logo">AKON'S <span>GYMHOUSE</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html">📊 Dashboard</a></li>
+                    <li><a href="checkin.html">📍 Check-in</a></li>
+                    <li><a href="classes.html">📅 Classes</a></li>
+                    <li><a href="payments.html" class="active">💳 Payments</a></li>
+                    <li><a href="profile.html">👤 Profile</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">M</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Member</div>
+                        <div class="user-role">Member</div>
+                    </div>
+                </div>
+                <button onclick="Auth.logout()" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 1rem;">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div style="margin-bottom: 2rem;">
+                <h1>My Payments</h1>
+                <p style="color: var(--text-secondary);">View your payment history</p>
+            </div>
+
+            <div class="stats-grid" style="margin-bottom: 2rem;">
+                <div class="stat-card">
+                    <h4>Total Spent</h4>
+                    <div class="value" id="totalSpent">KES 0</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Payments Made</h4>
+                    <div class="value" id="paymentsCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Current Plan</h4>
+                    <div class="value" id="currentPlan">-</div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Payment History</h3>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Plan</th>
+                            <th>Amount</th>
+                            <th>Transaction ID</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentsTable">
+                        <tr><td colspan="5" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        if (!Auth.requireRole('member')) throw new Error('Unauthorized');
+
+        const currentUser = Auth.getUser();
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+
+        async function loadPayments() {
+            const payments = await DataStore.getPaymentsByUser(currentUser.id);
+            const plans = await DataStore.getPlans();
+            const plansMap = {};
+            plans.forEach(p => plansMap[p.id] = p);
+
+            const total = payments.reduce((sum, p) => sum + p.amount, 0);
+            document.getElementById('totalSpent').textContent = 'KES ' + total.toLocaleString();
+            document.getElementById('paymentsCount').textContent = payments.length;
+
+            const currentPlan = plansMap[currentUser.plan];
+            document.getElementById('currentPlan').textContent = currentPlan ? currentPlan.name : 'None';
+
+            document.getElementById('paymentsTable').innerHTML = payments.map(p => {
+                const plan = plansMap[p.plan_id];
+                return `
+                    <tr>
+                        <td>${UI.formatDate(p.created_at)}</td>
+                        <td>${plan ? plan.name : 'Unknown'}</td>
+                        <td><strong>KES ${p.amount.toLocaleString()}</strong></td>
+                        <td><code>${p.transaction_id}</code></td>
+                        <td><span class="status-badge active">${p.status}</span></td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No payments yet</td></tr>';
+        }
+
+        loadPayments();
+    </script>
+</body>
+</html>

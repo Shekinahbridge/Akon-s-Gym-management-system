@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classes - Member - Akon's GymHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="sidebar-logo">AKON'S <span>GYMHOUSE</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html">📊 Dashboard</a></li>
+                    <li><a href="checkin.html">📍 Check-in</a></li>
+                    <li><a href="classes.html" class="active">📅 Classes</a></li>
+                    <li><a href="payments.html">💳 Payments</a></li>
+                    <li><a href="profile.html">👤 Profile</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">M</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Member</div>
+                        <div class="user-role">Member</div>
+                    </div>
+                </div>
+                <button onclick="Auth.logout()" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 1rem;">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div style="margin-bottom: 2rem;">
+                <h1>Book a Class</h1>
+                <p style="color: var(--text-secondary);">Reserve your spot in our group classes</p>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1.5rem;">Available Classes</h3>
+                <div id="classesList" style="display: grid; gap: 1rem;">
+                    <p style="text-align: center; padding: 2rem;">Loading...</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 1.5rem;">My Bookings</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Class</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="myBookings">
+                        <tr><td colspan="4" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Booking Modal -->
+    <div class="modal-overlay hidden" id="bookingModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Book a Class</h3>
+                <button class="modal-close" onclick="closeBookingModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: var(--cream); border-radius: 12px;">
+                    <h4 id="modalClassName" style="margin: 0 0 0.25rem;">Class Name</h4>
+                    <p id="modalClassDetails" style="font-size: 0.875rem; color: var(--text-secondary); margin: 0;"></p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Select a Date</label>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        This class runs on: <strong id="modalClassDays"></strong>
+                    </p>
+                    <input type="date" id="bookingDate" class="form-input">
+                    <p id="dateError" style="color: var(--danger, #e74c3c); font-size: 0.8rem; margin-top: 0.4rem; display: none;">
+                        ⚠ This class doesn't run on that day. Please pick a valid day.
+                    </p>
+                </div>
+
+                <div id="upcomingDates" style="margin-top: 1rem;">
+                    <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Or pick an upcoming session:</p>
+                    <div id="quickDateBtns" style="display: flex; flex-wrap: wrap; gap: 0.5rem;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeBookingModal()" class="btn btn-secondary">Cancel</button>
+                <button onclick="confirmBooking()" class="btn btn-primary">Confirm Booking</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        if (!Auth.requireRole('member')) throw new Error('Unauthorized');
+
+        const currentUser = Auth.getUser();
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+
+        // Map day names to JS getDay() numbers
+        const DAY_MAP = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 0 };
+        const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        let selectedClassId = null;
+        let selectedClassDayNums = [];
+
+        // Get the next N upcoming dates for a set of day numbers
+        function getUpcomingDates(dayNums, count = 4) {
+            const dates = [];
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            let d = new Date(today);
+
+            while (dates.length < count) {
+                if (dayNums.includes(d.getDay())) {
+                    dates.push(new Date(d));
+                }
+                d.setDate(d.getDate() + 1);
+            }
+            return dates;
+        }
+
+        function formatDateDisplay(date) {
+            return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+
+        function toInputValue(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;  // ✅ uses local time, no timezone shift
+        }
+
+        async function loadClasses() {
+            const classes = await DataStore.getClasses();
+            const trainers = await DataStore.getUsers('trainer');
+            const trainersMap = {};
+            trainers.forEach(t => trainersMap[t.id] = t);
+
+            document.getElementById('classesList').innerHTML = classes.map(c => {
+                const trainer = trainersMap[c.trainer_id];
+                const days = Array.isArray(c.days) ? c.days : c.days.split(',');
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background-color: var(--cream); border-radius: 12px; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <h4 style="margin: 0;">${c.name}</h4>
+                            <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0.25rem 0 0;">
+                                ${trainer ? trainer.name : 'Unknown'} &bull; ${days.join(', ')} &bull; ${c.time} &bull; ${c.duration} min
+                            </p>
+                        </div>
+                        <button onclick="openBookingModal('${c.id}', '${c.name}', '${days.join(',')}', '${trainer ? trainer.name : 'Unknown'}', '${c.time}')" class="btn btn-primary btn-sm">
+                            Book
+                        </button>
+                    </div>
+                `;
+            }).join('') || '<p style="text-align: center; padding: 2rem;">No classes available</p>';
+        }
+
+        function openBookingModal(classId, className, daysStr, trainerName, time) {
+            selectedClassId = classId;
+            const days = daysStr.split(',').map(d => d.trim());
+            selectedClassDayNums = days.map(d => DAY_MAP[d]).filter(n => n !== undefined);
+
+            document.getElementById('modalClassName').textContent = className;
+            document.getElementById('modalClassDetails').textContent = `${trainerName} • ${time}`;
+            document.getElementById('modalClassDays').textContent = days.join(', ');
+
+            // Set min date to today
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            document.getElementById('bookingDate').min = toInputValue(today);
+            document.getElementById('bookingDate').value = '';
+            document.getElementById('dateError').style.display = 'none';
+
+            // Build quick date buttons for next 4 sessions
+            const upcoming = getUpcomingDates(selectedClassDayNums, 4);
+            document.getElementById('quickDateBtns').innerHTML = upcoming.map(date => `
+                <button onclick="selectQuickDate('${toInputValue(date)}')"
+                    class="btn btn-outline btn-sm"
+                    style="font-size: 0.8rem;">
+                    ${formatDateDisplay(date)}
+                </button>
+            `).join('');
+
+            // Auto-select the next upcoming session
+            if (upcoming.length > 0) {
+                document.getElementById('bookingDate').value = toInputValue(upcoming[0]);
+            }
+
+            UI.showModal('bookingModal');
+        }
+
+        function selectQuickDate(dateStr) {
+            document.getElementById('bookingDate').value = dateStr;
+            document.getElementById('dateError').style.display = 'none';
+
+            // Highlight selected button
+            document.querySelectorAll('#quickDateBtns button').forEach(btn => {
+                btn.style.backgroundColor = '';
+                btn.style.color = '';
+            });
+            event.target.style.backgroundColor = 'var(--accent)';
+            event.target.style.color = 'white';
+        }
+
+        // Validate date when user manually picks one
+        document.getElementById('bookingDate').addEventListener('change', function() {
+            const picked = new Date(this.value + 'T00:00:00');
+            const dayNum = picked.getDay();
+            const valid = selectedClassDayNums.includes(dayNum);
+            document.getElementById('dateError').style.display = valid ? 'none' : 'block';
+        });
+
+        async function confirmBooking() {
+            const dateVal = document.getElementById('bookingDate').value;
+
+            if (!dateVal) {
+                UI.toast('Please select a date', 'error');
+                return;
+            }
+
+            const picked = new Date(dateVal + 'T00:00:00');
+            const dayNum = picked.getDay();
+
+            if (!selectedClassDayNums.includes(dayNum)) {
+                document.getElementById('dateError').style.display = 'block';
+                UI.toast('This class does not run on that day', 'error');
+                return;
+            }
+
+            await DataStore.addBooking({
+                userId: currentUser.id,
+                classId: selectedClassId,
+                date: dateVal,
+                status: 'booked'
+            });
+
+            UI.toast('Class booked for ' + formatDateDisplay(picked) + '!', 'success');
+            closeBookingModal();
+            loadBookings();
+        }
+
+        function closeBookingModal() {
+            UI.hideModal('bookingModal');
+            selectedClassId = null;
+            selectedClassDayNums = [];
+        }
+
+        async function loadBookings() {
+            const bookings = await DataStore.getBookingsByUser(currentUser.id);
+            const classes = await DataStore.getClasses();
+            const classesMap = {};
+            classes.forEach(c => classesMap[c.id] = c);
+
+            document.getElementById('myBookings').innerHTML = bookings.slice().reverse().map(b => {
+                const cls = classesMap[b.class_id];
+                const statusClass = b.status === 'attended' ? 'active' : b.status === 'missed' ? 'inactive' : 'active';
+                return `
+                    <tr>
+                        <td>${UI.formatDate(b.date)}</td>
+                        <td>${cls ? cls.name : 'Unknown'}</td>
+                        <td>${cls ? cls.time : '-'}</td>
+                        <td><span class="status-badge ${statusClass}">${b.status}</span></td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="4" style="text-align: center; padding: 2rem;">No bookings yet</td></tr>';
+        }
+
+        loadClasses();
+        loadBookings();
+    </script>
+</body>
+</html>

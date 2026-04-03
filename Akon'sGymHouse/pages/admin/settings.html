@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Admin - Akon's GymHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="sidebar-logo">AKON'S <span>GYMHOUSE</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html">📊 Dashboard</a></li>
+                    <li><a href="members.html">👥 Members</a></li>
+                    <li><a href="trainers.html">💪 Trainers</a></li>
+                    <li><a href="classes.html">📅 Classes</a></li>
+                    <li><a href="payments.html">💳 Payments</a></li>
+                    <li><a href="reports.html">📈 Reports</a></li>
+                    <li><a href="settings.html" class="active">⚙️ Settings</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Admin</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                </div>
+                <button onclick="Auth.logout()" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 1rem;">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div style="margin-bottom: 2rem;">
+                <h1>Settings</h1>
+                <p style="color: var(--text-secondary);">Manage gym settings and membership plans</p>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin: 0;">Membership Plans</h3>
+                    <button onclick="showAddPlanModal()" class="btn btn-primary btn-sm">+ Add Plan</button>
+                </div>
+                <div id="plansList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1.5rem;">Gym Information</h3>
+                <form id="gymInfoForm">
+                    <div class="form-group">
+                        <label class="form-label">Gym Name</label>
+                        <input type="text" id="gymName" class="form-input" value="Akon's GymHouse">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Address</label>
+                        <input type="text" id="gymAddress" class="form-input" value="Kilimani Road, Nairobi, Kenya">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" id="gymPhone" class="form-input" value="+254 712 345 678">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Opening Time (Weekdays)</label>
+                            <input type="time" id="weekdayOpen" class="form-input" value="06:00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Closing Time (Weekdays)</label>
+                            <input type="time" id="weekdayClose" class="form-input" value="21:00">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Opening Time (Saturday)</label>
+                            <input type="time" id="saturdayOpen" class="form-input" value="08:00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Closing Time (Saturday)</label>
+                            <input type="time" id="saturdayClose" class="form-input" value="18:00">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 1.5rem;">Data Management</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div style="background-color: var(--cream); padding: 1.5rem; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">💾</div>
+                        <h4>Backup Data</h4>
+                        <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0.5rem 0 1rem;">Export all gym data</p>
+                        <button onclick="backupData()" class="btn btn-outline btn-sm" style="width: 100%;">Backup</button>
+                    </div>
+                    <div style="background-color: var(--cream); padding: 1.5rem; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗑️</div>
+                        <h4>Clear All Data</h4>
+                        <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0.5rem 0 1rem;">Reset to defaults</p>
+                        <button onclick="clearAllData()" class="btn btn-danger btn-sm" style="width: 100%;">Clear Data</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay hidden" id="planModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="planModalTitle">Add Plan</h3>
+                <button class="modal-close" onclick="UI.hideModal('planModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="planForm">
+                    <input type="hidden" id="planId">
+                    <div class="form-group">
+                        <label class="form-label">Plan Name</label>
+                        <input type="text" id="planName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Price (KES per week)</label>
+                        <input type="number" id="planPrice" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <input type="text" id="planDescription" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Features (one per line)</label>
+                        <textarea id="planFeatures" class="form-textarea" rows="4" placeholder="Access to gym floor&#10;Locker room access"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" id="planFeatured"> Mark as Featured
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="UI.hideModal('planModal')" class="btn btn-secondary">Cancel</button>
+                <button onclick="savePlan()" class="btn btn-primary">Save Plan</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        if (!Auth.requireRole('admin')) throw new Error('Unauthorized');
+
+        const currentUser = Auth.getUser();
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+
+        async function loadPlans() {
+            const plans = await DataStore.getPlans();
+            
+            document.getElementById('plansList').innerHTML = plans.map(p => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background-color: var(--cream); border-radius: 12px; margin-bottom: 0.75rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <strong>${p.name}</strong>
+                            ${p.featured ? '<span style="background-color: var(--accent); color: white; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.7rem;">FEATURED</span>' : ''}
+                        </div>
+                        <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0.25rem 0 0;">KES ${p.price.toLocaleString()}/week • ${p.features.length} features</p>
+                    </div>
+                    <button onclick="editPlan('${p.id}')" class="btn btn-sm btn-outline">Edit</button>
+                </div>
+            `).join('') || '<p style="text-align: center; padding: 2rem;">No plans configured</p>';
+        }
+
+        function showAddPlanModal() {
+            document.getElementById('planModalTitle').textContent = 'Add Plan';
+            document.getElementById('planId').value = '';
+            document.getElementById('planName').value = '';
+            document.getElementById('planPrice').value = '';
+            document.getElementById('planDescription').value = '';
+            document.getElementById('planFeatures').value = '';
+            document.getElementById('planFeatured').checked = false;
+            UI.showModal('planModal');
+        }
+
+        async function editPlan(id) {
+            const plans = await DataStore.getPlans();
+            const plan = plans.find(p => p.id === id);
+            if (!plan) return;
+
+            document.getElementById('planModalTitle').textContent = 'Edit Plan';
+            document.getElementById('planId').value = id;
+            document.getElementById('planName').value = plan.name;
+            document.getElementById('planPrice').value = plan.price;
+            document.getElementById('planDescription').value = plan.description || '';
+            document.getElementById('planFeatures').value = plan.features.join('\n');
+            document.getElementById('planFeatured').checked = plan.featured || false;
+            UI.showModal('planModal');
+        }
+
+        async function savePlan() {
+            const id = document.getElementById('planId').value;
+            const name = document.getElementById('planName').value;
+            const price = parseInt(document.getElementById('planPrice').value);
+            const description = document.getElementById('planDescription').value;
+            const features = document.getElementById('planFeatures').value.split('\n').filter(f => f.trim());
+            const featured = document.getElementById('planFeatured').checked;
+
+            if (!name || !price) {
+                UI.toast('Please fill all required fields', 'error');
+                return;
+            }
+
+            await DataStore.savePlan({
+                id: id || undefined,
+                name,
+                price,
+                description,
+                features,
+                featured
+            });
+
+            UI.toast('Plan saved successfully!', 'success');
+            UI.hideModal('planModal');
+            loadPlans();
+        }
+
+        async function backupData() {
+            const [users, plans, classes, payments, checkins, bookings] = await Promise.all([
+                DataStore.getUsers(),
+                DataStore.getPlans(),
+                DataStore.getClasses(),
+                DataStore.getPayments(),
+                DataStore.getCheckins(),
+                DataStore.getBookings()
+            ]);
+            
+            const data = {
+                users,
+                plans,
+                classes,
+                payments,
+                checkins,
+                bookings,
+                exportedAt: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'gymhouse_backup_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            UI.toast('Backup downloaded!', 'success');
+        }
+
+        function clearAllData() {
+            UI.toast('Please use phpMyAdmin to reset the database', 'warning');
+        }
+
+        document.getElementById('gymInfoForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            UI.toast('Gym information saved!', 'success');
+        });
+
+        loadPlans();
+    </script>
+</body>
+</html>

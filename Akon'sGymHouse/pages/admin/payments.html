@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payments - Admin - Akon's GymHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="sidebar-logo">AKON'S <span>GYMHOUSE</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html">📊 Dashboard</a></li>
+                    <li><a href="members.html">👥 Members</a></li>
+                    <li><a href="trainers.html">💪 Trainers</a></li>
+                    <li><a href="classes.html">📅 Classes</a></li>
+                    <li><a href="payments.html" class="active">💳 Payments</a></li>
+                    <li><a href="reports.html">📈 Reports</a></li>
+                    <li><a href="settings.html">⚙️ Settings</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Admin</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                </div>
+                <button onclick="Auth.logout()" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 1rem;">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div>
+                    <h1>Payments</h1>
+                    <p style="color: var(--text-secondary);">Track and manage all payments</p>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button onclick="exportPaymentsCSV()" class="btn btn-outline">📥 Export CSV</button>
+                    <button onclick="showRecordPaymentModal()" class="btn btn-primary">+ Record Payment</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Total Revenue</h4>
+                    <div class="value" id="totalRevenue">KES 0</div>
+                    <div class="change positive">All time</div>
+                </div>
+                <div class="stat-card">
+                    <h4>This Month</h4>
+                    <div class="value" id="monthlyRevenue">KES 0</div>
+                    <div class="change positive">Current month</div>
+                </div>
+                <div class="stat-card">
+                    <h4>This Week</h4>
+                    <div class="value" id="weeklyRevenue">KES 0</div>
+                    <div class="change positive">Last 7 days</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Total Transactions</h4>
+                    <div class="value" id="totalTransactions">0</div>
+                    <div class="change positive">All payments</div>
+                </div>
+            </div>
+
+            <div class="card" style="margin: 2rem 0;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">From Date</label>
+                        <input type="date" id="fromDate" class="form-input">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">To Date</label>
+                        <input type="date" id="toDate" class="form-input">
+                    </div>
+                    <button onclick="applyDateFilter()" class="btn btn-primary">Filter</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>All Payments</h3>
+                    <span id="paymentCount" style="color: var(--text-secondary);">0 payments</span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Member</th>
+                            <th>Plan</th>
+                            <th>Amount</th>
+                            <th>Phone</th>
+                            <th>Transaction ID</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentsTable">
+                        <tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay hidden" id="recordPaymentModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Record Payment</h3>
+                <button class="modal-close" onclick="UI.hideModal('recordPaymentModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="recordPaymentForm">
+                    <div class="form-group">
+                        <label class="form-label">Member</label>
+                        <select id="paymentMember" class="form-select" required>
+                            <option value="">Select Member</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Plan</label>
+                        <select id="paymentPlan" class="form-select" required>
+                            <option value="">Select Plan</option>
+                            <option value="basic">Basic - KES 2,500</option>
+                            <option value="standard">Standard - KES 4,000</option>
+                            <option value="premium">Premium - KES 6,500</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Amount (KES)</label>
+                        <input type="number" id="paymentAmount" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input type="tel" id="paymentPhone" class="form-input" placeholder="+254...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Transaction ID</label>
+                        <input type="text" id="paymentTransactionId" class="form-input" placeholder="CASH or MP...">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="UI.hideModal('recordPaymentModal')" class="btn btn-secondary">Cancel</button>
+                <button onclick="recordPayment()" class="btn btn-primary">Record Payment</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        if (!Auth.requireRole('admin')) throw new Error('Unauthorized');
+
+        const currentUser = Auth.getUser();
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+
+        let allPayments = [];
+
+        async function loadPayments() {
+            allPayments = await DataStore.getPayments();
+            updateStats();
+            renderPayments(allPayments);
+            loadMembersDropdown();
+        }
+
+        function updateStats() {
+            const total = allPayments.reduce((sum, p) => sum + p.amount, 0);
+            document.getElementById('totalRevenue').textContent = 'KES ' + total.toLocaleString();
+
+            const now = new Date();
+            const thisMonth = allPayments.filter(p => {
+                const date = new Date(p.created_at);
+                return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+            });
+            document.getElementById('monthlyRevenue').textContent = 'KES ' + thisMonth.reduce((s, p) => s + p.amount, 0).toLocaleString();
+
+            const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            const thisWeek = allPayments.filter(p => new Date(p.created_at) >= oneWeekAgo);
+            document.getElementById('weeklyRevenue').textContent = 'KES ' + thisWeek.reduce((s, p) => s + p.amount, 0).toLocaleString();
+
+            document.getElementById('totalTransactions').textContent = allPayments.length;
+        }
+
+        function renderPayments(payments) {
+            document.getElementById('paymentCount').textContent = payments.length + ' payment' + (payments.length !== 1 ? 's' : '');
+            
+            document.getElementById('paymentsTable').innerHTML = payments.slice().reverse().map(p => `
+                <tr>
+                    <td>${UI.formatDate(p.created_at)}</td>
+                    <td><strong>${p.user_name || 'Unknown'}</strong></td>
+                    <td>${p.plan_name || 'Unknown'}</td>
+                    <td><strong>KES ${p.amount.toLocaleString()}</strong></td>
+                    <td>${p.phone || '-'}</td>
+                    <td><code>${p.transaction_id}</code></td>
+                    <td><span class="status-badge active">Completed</span></td>
+                </tr>
+            `).join('') || '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No payments found</td></tr>';
+        }
+
+        async function loadMembersDropdown() {
+            const members = await DataStore.getUsers('member');
+            document.getElementById('paymentMember').innerHTML = `
+                <option value="">Select Member</option>
+                ${members.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
+            `;
+        }
+
+        function applyDateFilter() {
+            const from = document.getElementById('fromDate').value;
+            const to = document.getElementById('toDate').value;
+            
+            let filtered = allPayments;
+            
+            if (from) {
+                filtered = filtered.filter(p => new Date(p.created_at) >= new Date(from));
+            }
+            if (to) {
+                filtered = filtered.filter(p => new Date(p.created_at) <= new Date(to + 'T23:59:59'));
+            }
+            
+            renderPayments(filtered);
+        }
+
+        function showRecordPaymentModal() {
+            UI.showModal('recordPaymentModal');
+        }
+
+        async function recordPayment() {
+            const userId = document.getElementById('paymentMember').value;
+            const planId = document.getElementById('paymentPlan').value;
+            const amount = parseInt(document.getElementById('paymentAmount').value);
+            const phone = document.getElementById('paymentPhone').value;
+            const transactionId = document.getElementById('paymentTransactionId').value || 'CASH' + Date.now();
+
+            if (!userId || !planId || !amount) {
+                UI.toast('Please fill all required fields', 'error');
+                return;
+            }
+
+            await DataStore.addPayment({
+                userId,
+                planId,
+                amount,
+                phone,
+                transactionId,
+                status: 'completed'
+            });
+
+            await DataStore.updateUser(userId, {
+                plan: planId,
+                planExpiry: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            });
+
+            UI.toast('Payment recorded successfully!', 'success');
+            UI.hideModal('recordPaymentModal');
+            document.getElementById('recordPaymentForm').reset();
+            loadPayments();
+        }
+
+        function exportPaymentsCSV() {
+            const from = document.getElementById('fromDate').value;
+            const to = document.getElementById('toDate').value;
+            
+            let filtered = allPayments;
+            if (from) filtered = filtered.filter(p => new Date(p.created_at) >= new Date(from));
+            if (to) filtered = filtered.filter(p => new Date(p.created_at) <= new Date(to + 'T23:59:59'));
+            
+            const data = filtered.map(p => ({
+                Date: UI.formatDate(p.created_at),
+                Member: p.user_name || 'Unknown',
+                Plan: p.plan_name || 'Unknown',
+                Amount: p.amount,
+                Phone: p.phone || '-',
+                'Transaction ID': p.transaction_id
+            }));
+            
+            Reports.downloadCSV(data, 'payments_report_' + new Date().toISOString().split('T')[0]);
+            UI.toast('Payments exported successfully!', 'success');
+        }
+
+        document.getElementById('paymentPlan').addEventListener('change', async (e) => {
+            const plans = await DataStore.getPlans();
+            const plan = plans.find(p => p.id === e.target.value);
+            if (plan) {
+                document.getElementById('paymentAmount').value = plan.price;
+            }
+        });
+
+        loadPayments();
+    </script>
+</body>
+</html>

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classes - Admin - Akon's GymHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="sidebar-logo">AKON'S <span>GYMHOUSE</span></a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html">📊 Dashboard</a></li>
+                    <li><a href="members.html">👥 Members</a></li>
+                    <li><a href="trainers.html">💪 Trainers</a></li>
+                    <li><a href="classes.html" class="active">📅 Classes</a></li>
+                    <li><a href="payments.html">💳 Payments</a></li>
+                    <li><a href="reports.html">📈 Reports</a></li>
+                    <li><a href="settings.html">⚙️ Settings</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Admin</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                </div>
+                <button onclick="Auth.logout()" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 1rem;">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div>
+                    <h1>Classes</h1>
+                    <p style="color: var(--text-secondary);">Manage gym classes and schedules</p>
+                </div>
+                <button onclick="showAddClassModal()" class="btn btn-primary">+ Add Class</button>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>All Classes</h3>
+                    <span id="classCount" style="color: var(--text-secondary);">0 classes</span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Class Name</th>
+                            <th>Trainer</th>
+                            <th>Days</th>
+                            <th>Time</th>
+                            <th>Duration</th>
+                            <th>Capacity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="classesTable">
+                        <tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 1.5rem;">Weekly Schedule Preview</h3>
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Monday</th>
+                                <th>Tuesday</th>
+                                <th>Wednesday</th>
+                                <th>Thursday</th>
+                                <th>Friday</th>
+                                <th>Saturday</th>
+                                <th>Sunday</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedulePreview">
+                            <tr><td colspan="8" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Class Modal -->
+    <div class="modal-overlay hidden" id="addClassModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Add New Class</h3>
+                <button class="modal-close" onclick="UI.hideModal('addClassModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addClassForm">
+                    <div class="form-group">
+                        <label class="form-label">Class Name</label>
+                        <input type="text" id="className" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Trainer</label>
+                        <select id="classTrainer" class="form-select" required>
+                            <option value="">Select Trainer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Days</label>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="classDays" value="Mon"> Mon
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="classDays" value="Tue"> Tue
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="classDays" value="Wed"> Wed
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="classDays" value="Thu"> Thu
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="classDays" value="Fri"> Fri
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="classDays" value="Sat"> Sat
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="classDays" value="Sun"> Sun
+                            </label>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Time</label>
+                            <input type="time" id="classTime" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Duration (minutes)</label>
+                            <input type="number" id="classDuration" class="form-input" value="45" min="15" max="180" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Max Capacity</label>
+                        <input type="number" id="classCapacity" class="form-input" value="20" min="1" max="50" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="UI.hideModal('addClassModal')" class="btn btn-secondary">Cancel</button>
+                <button onclick="addClass()" class="btn btn-primary">Add Class</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Class Modal -->
+    <div class="modal-overlay hidden" id="editClassModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Edit Class</h3>
+                <button class="modal-close" onclick="UI.hideModal('editClassModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editClassForm">
+                    <input type="hidden" id="editClassId">
+                    <div class="form-group">
+                        <label class="form-label">Class Name</label>
+                        <input type="text" id="editClassName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Trainer</label>
+                        <select id="editClassTrainer" class="form-select" required>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Days</label>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;" id="editClassDays">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Time</label>
+                            <input type="time" id="editClassTime" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Duration (minutes)</label>
+                            <input type="number" id="editClassDuration" class="form-input" min="15" max="180" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Max Capacity</label>
+                        <input type="number" id="editClassCapacity" class="form-input" min="1" max="50" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="deleteClass()" class="btn btn-danger">Delete</button>
+                <button onclick="UI.hideModal('editClassModal')" class="btn btn-secondary">Cancel</button>
+                <button onclick="saveClass()" class="btn btn-primary">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        if (!Auth.requireRole('admin')) throw new Error('Unauthorized');
+
+        const currentUser = Auth.getUser();
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+
+        let currentEditId = null;
+        let trainers = [];
+
+        async function loadData() {
+            const classes = await DataStore.getClasses();
+            trainers = await DataStore.getUsers('trainer');
+            
+            document.getElementById('classCount').textContent = classes.length + ' classes';
+            
+            const trainersMap = {};
+            trainers.forEach(t => trainersMap[t.id] = t);
+            
+            // Classes table
+            document.getElementById('classesTable').innerHTML = classes.map(c => {
+                const trainer = trainersMap[c.trainer_id];
+                return `
+                    <tr>
+                        <td><strong>${c.name}</strong></td>
+                        <td>${trainer ? trainer.name : 'Unassigned'}</td>
+                        <td>${c.days.join(', ')}</td>
+                        <td>${c.time}</td>
+                        <td>${c.duration} min</td>
+                        <td>${c.maxCapacity}</td>
+                        <td>
+                            <button onclick="editClass('${c.id}')" class="btn btn-sm btn-outline">Edit</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No classes yet</td></tr>';
+
+            // Schedule preview
+            const timeSlots = [...new Set(classes.map(c => c.time))].sort();
+            const dayMap = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 0 };
+            
+            document.getElementById('schedulePreview').innerHTML = timeSlots.map(time => `
+                <tr>
+                    <td><strong>${time}</strong></td>
+                    ${[1, 2, 3, 4, 5, 6, 0].map(day => {
+                        const cls = classes.find(c => c.time === time && c.days.some(d => dayMap[d] === day));
+                        if (cls) {
+                            const trainer = trainersMap[cls.trainer_id];
+                            return `<td style="background-color: var(--cream); font-size: 0.875rem;"><strong>${cls.name}</strong><br><span style="color: var(--text-secondary);">${trainer ? trainer.name.split(' ')[0] : ''}</span></td>`;
+                        }
+                        return '<td>-</td>';
+                    }).join('')}
+                </tr>
+            `).join('') || '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No schedule</td></tr>';
+
+            // Populate trainer dropdowns
+            const trainerOptions = trainers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            document.getElementById('classTrainer').innerHTML = '<option value="">Select Trainer</option>' + trainerOptions;
+            document.getElementById('editClassTrainer').innerHTML = trainerOptions;
+        }
+
+        function showAddClassModal() {
+            UI.showModal('addClassModal');
+        }
+
+        async function addClass() {
+            const name = document.getElementById('className').value;
+            const trainerId = document.getElementById('classTrainer').value;
+            const days = Array.from(document.querySelectorAll('input[name="classDays"]:checked')).map(cb => cb.value);
+            const time = document.getElementById('classTime').value;
+            const duration = parseInt(document.getElementById('classDuration').value);
+            const maxCapacity = parseInt(document.getElementById('classCapacity').value);
+
+            if (!name || !trainerId || days.length === 0 || !time) {
+                UI.toast('Please fill all required fields', 'error');
+                return;
+            }
+
+            await DataStore.saveClass({
+                id: 'c' + Date.now(),
+                name,
+                trainerId,
+                days,
+                time,
+                duration,
+                maxCapacity
+            });
+
+            UI.toast('Class added successfully!', 'success');
+            UI.hideModal('addClassModal');
+            document.getElementById('addClassForm').reset();
+            loadData();
+        }
+
+        async function editClass(id) {
+            const classes = await DataStore.getClasses();
+            const cls = classes.find(c => c.id === id);
+            if (!cls) return;
+
+            currentEditId = id;
+            document.getElementById('editClassId').value = id;
+            document.getElementById('editClassName').value = cls.name;
+            document.getElementById('editClassTrainer').value = cls.trainer_id;
+            document.getElementById('editClassTime').value = cls.time;
+            document.getElementById('editClassDuration').value = cls.duration;
+            document.getElementById('editClassCapacity').value = cls.maxCapacity;
+
+            // Days checkboxes
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            document.getElementById('editClassDays').innerHTML = days.map(d => `
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="editClassDays" value="${d}" ${cls.days.includes(d) ? 'checked' : ''}> ${d}
+                </label>
+            `).join('');
+
+            UI.showModal('editClassModal');
+        }
+
+        async function saveClass() {
+            const days = Array.from(document.querySelectorAll('input[name="editClassDays"]:checked')).map(cb => cb.value);
+            
+            await DataStore.saveClass({
+                id: currentEditId,
+                name: document.getElementById('editClassName').value,
+                trainerId: document.getElementById('editClassTrainer').value,
+                days,
+                time: document.getElementById('editClassTime').value,
+                duration: parseInt(document.getElementById('editClassDuration').value),
+                maxCapacity: parseInt(document.getElementById('editClassCapacity').value)
+            });
+
+            UI.toast('Class updated successfully!', 'success');
+            UI.hideModal('editClassModal');
+            loadData();
+        }
+
+        async function deleteClass() {
+            if (confirm('Are you sure you want to delete this class?')) {
+                await DataStore.deleteClass(currentEditId);
+                UI.toast('Class deleted', 'success');
+                UI.hideModal('editClassModal');
+                loadData();
+            }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
